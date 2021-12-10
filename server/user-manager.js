@@ -10,4 +10,3 @@ module.exports = (io) => {
     socket.on('set nickname', nickname => socket.user.setNickname(nickname));
   })
 }
-//HAHA I EXIST
