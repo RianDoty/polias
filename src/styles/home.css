@@ -1,0 +1,137 @@
+.dash-section {
+  margin: 0 10px;
+  padding: 10px 0;
+  display: block;
+}
+
+.dash-section::after {
+  content: '';
+  clear:both;
+  display: block;
+}
+
+.dash-section:not(:first-child) {
+  border-top: 1px solid var(--highlight);
+}
+
+
+.bottom-logo {
+  color: grey;
+  margin-top: 5px;
+}
+
+/*Sections of a grid*/
+.cell {
+  padding: 8px;
+  display: inline-block;
+  float: left;
+}
+
+.dash-box {
+  padding: 15px;
+  overflow: hidden;
+  
+  background-color: var(--shade2);
+  border: 1px solid #111;
+  border-radius: 3px;
+  box-shadow: 0 2px rgb(0 0 0 / 13%);
+}
+
+.cell-header {
+  margin: -15px -15px 15px -15px;
+  
+  font-weight: bold;
+  font-size: 13px;
+  text-transform: uppercase;
+  
+  padding: 5px 10px;
+  background-color: var(--shade);
+  border-bottom: solid 1px var(--shadow);
+}
+
+.cell:first-child {
+  padding-left: 0;
+}
+
+.cell:last-child {
+  padding-right: 0;
+}
+
+.w-3-5 {
+  width: 60%;
+}
+
+.w-2-5 {
+  width: 40%;
+}
+
+.w-1-2 {
+  width: 50%;
+}
+
+/*Name entry*/
+.name-entry-form {
+  
+}
+
+.transparent-input, .transparent-input:focus-visible {
+  border: none;
+  outline: none;
+  background: none;
+  color: white;
+  
+  border-bottom: 1px solid grey;
+  margin: 0 3px;
+  font-size: 17px;
+}
+
+.button {
+  background: var(--highlight);
+  color: white;
+  border: 2px solid var(--highlight2);
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 16px;
+  padding: 3px 7px; 
+  box-shadow: inset 0px -2px rgb(0 0 0 / 10%);
+}
+
+.button:hover {
+  background: var(--highlight2);
+}
+
+.button:active {
+  background: var(--highlight);
+  box-shadow: inset 0px 2px rgb(0 0 0 / 10%);
+}
+
+.header-profile {
+  overflow: hidden;
+  max-height: 100%;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+/*Server list stuff*/
+.dashboard-list a {
+  text-align: left;
+  display: block;
+  overflow: hidden;
+  padding: 7px;
+}
+
+.dashboard-list a:hover {
+  background-color: var(--background);
+}
+
+.muted {
+  color: grey;
+}
+
+.f-80 {
+  font-size: .8em;
+}
+
+.center-float {
+  float: none;
+}

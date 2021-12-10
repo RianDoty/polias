@@ -1,0 +1,170 @@
+/*** Left Bar ***/ 
+.left-side-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 225px;
+  background-color: var(--shade2);
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+
+  box-shadow: 2px 0px 4px 2px var(--shadow);
+}
+
+/** User List **/
+
+.user-list {
+  width: 100%;
+  padding: 5px;
+
+  overflow: auto;
+}
+
+/* Scroll bar */
+/* width */
+.user-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+.user-list::-webkit-scrollbar-track {
+  background: var(--shade2);
+}
+
+/* Handle */
+.user-list::-webkit-scrollbar-thumb {
+  background: var(--highlight2);
+  border-radius: 2px;
+}
+
+/* Handle on hover */
+.user-list::-webkit-scrollbar-thumb:hover {
+  background: var(--highlight);
+}
+
+/* Individual Users */
+.user-entry {
+  text-align: left;
+  padding: 5px;
+}
+
+.this-user {
+  background: var(--highlight3);
+  border-radius: 3px;
+}
+
+.host-user {
+  background: #221;
+  border-radius: 3px;
+}
+
+.user-entry:not(:first-child) {
+  padding-top: 10px;
+  border-top: 1px solid #444;
+}
+
+.user-info {
+  padding-left: 5px;
+  display: inline-block;
+}
+
+.rank {
+}
+
+.avatar {
+  height: 40px;
+  
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+/** Middle Content **/
+.middle-content {
+  position: absolute;
+  top:0;
+  bottom:0;
+  left: 225px;
+  right:0;
+  
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chat */
+.chat {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-entry {
+  background: rgba(0, 0, 0, 0.15);
+  padding: 0.25rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  height: 3rem;
+  flex-shrink: 0;
+}
+
+.message-entry > input {
+  border: none;
+  padding: 0 1rem;
+  flex-grow: 1;
+  border-radius: 2rem;
+  margin: 0.25rem;
+}
+
+.message-entry > input:focus {
+  outline: none;
+}
+
+.message-entry > button {
+  background: var(--highlight2);
+  border: none;
+  padding: 0 1rem;
+  margin: 0.25rem;
+  border-radius: 3px;
+  outline: none;
+  color: #fff;
+}
+
+.message-list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  flex-grow: 1;
+  width: 100%;
+  background: var(--shade);
+  overflow: auto;
+}
+
+/* Messages */
+.message {
+  padding: 0.5rem 1rem;
+  text-align: left;
+  display: flex;
+}
+
+.message > .avatar {
+  height: 50px;
+  margin: 5px;
+  flex-shrink: 0;
+}
+
+.message-container {
+  display: inline-block;
+  height: 100%;
+  flex-grow: 1;
+}
+
+.message-author {
+  top: 2px;
+  left: 2px;
+  font-weight: bold;
+  color: var(--highlight);
+}

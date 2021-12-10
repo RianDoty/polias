@@ -1,0 +1,10 @@
+{
+  "default": "https://cdn.glitch.me/35125d36-1414-4625-886d-50b6771f7d06%2Fbaseavatar.png?v=1636495856765",
+  "cardPacks": {
+    "fruits": [
+      "https://cdn.glitch.me/35125d36-1414-4625-886d-50b6771f7d06%2Fappleicon.png?v=1638548973861",
+      "https://cdn.glitch.me/35125d36-1414-4625-886d-50b6771f7d06%2Fgrapes.jpg?v=1638564411857",
+      "https://cdn.glitch.me/35125d36-1414-4625-886d-50b6771f7d06%2Forangeicon.jpg?v=1638905689051"
+    ]
+  }
+}
