@@ -1,7 +1,7 @@
 const InitUsers = require('./user-manager')
-const InitRooms = require('./rooms-manager')
+const RoomsManager = require('./rooms-manager')
 
 module.exports = (io)=>{
-  InitRooms(io)
+  const roomsManager = new RoomsManager(io);
   InitUsers(io)
 }

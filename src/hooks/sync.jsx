@@ -13,7 +13,7 @@ const useSync = (keyword, def) => {
       Object.keys(def).forEach(key => {
         delete s[key];
       })
-      
+
       return s;
     }));
     return () => socket.emit(`sync unsubscribe ${keyword}`);

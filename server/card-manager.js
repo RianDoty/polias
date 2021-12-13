@@ -24,9 +24,9 @@ class CardManager {
     this.assignPack(defaultPack);
   }
   
-  
-  
   assignPack(pack) {
+    if (!pack) return false;
+
     this.cardPack = pack;
     const unassignedCards = Object.keys(pack);
     this.notEnoughCards = false;
@@ -58,12 +58,12 @@ class CardManager {
     user.cardId = cardId
     
     if (cardId === -1) { //a card couldn't be found
-      this.notEnoughCards = true;
+      this.alertNotEnoughCards();
     }
   }
   
   alertNotEnoughCards() {
-    
+    this.notEnoughCards = true;
   }
 }
 

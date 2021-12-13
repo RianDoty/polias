@@ -33,6 +33,7 @@ class Room {
   
   join(socket) {
     const { user } = socket;
+    
     if (!user) return console.warn('socket does not have a user!');
     
     //Update users
