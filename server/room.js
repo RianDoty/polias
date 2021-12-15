@@ -52,8 +52,8 @@ class Room {
     }
     
     //Join the socket into the lobby by default
-    this.chatManager.joinSocket(socket, 'lobby');
-    
+    this.chatManager.joinSocket(socket, 'lobby');   
+
     //Give the user a random card by default
     this.cardManager.assignCard(socket);
   }
