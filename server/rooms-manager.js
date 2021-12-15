@@ -1,6 +1,7 @@
 const SyncHost = require("./sync");
 const Room = require('./room')
 const { randomCode, unregisterCode } = require("./random-code");
+const { io } = require("socket.io-client");
 
 const rooms = {};
 
@@ -16,7 +17,6 @@ class RoomsManager {
   }
 
   connect() {
-    
     this.onConnect = (socket)=>this.registerHandlers(socket)
     this.io.on('connection', this.onConnect);
   }
