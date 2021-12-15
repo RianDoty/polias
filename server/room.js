@@ -26,14 +26,15 @@ class Room {
     this.generateChatRooms();
     
     //Cards
-    this.cardManager = new CardManager(io, code)
+    this.cardManager = new CardManager(io)
     
     this.host = host
   }
   
   join(socket) {
     const { user } = socket;
-    if (!user) return console.warn('socket does not have a user!');
+    
+    if (!user) return console.log('socket does not have a user!');
     
     //Update users
     this.users[socket.id] = socket.user;
@@ -51,7 +52,10 @@ class Room {
     }
     
     //Join the socket into the lobby by default
-    this.chatManager.joinSocket(socket, 'lobby')
+    this.chatManager.joinSocket(socket, 'lobby');
+    
+    //Give the user a random card by default
+    this.cardManager.assignCard(socket);
   }
   
   leave(socket) {
@@ -112,6 +116,14 @@ class Room {
   // Chat
   generateChatRooms() {
     this.chatManager.createRoom('lobby')
+  }
+  
+  // Cards
+  changeCardPack(requester, pack) {
+    //Only the host should be able to change the pack
+    if (!requester.hasAdmin()) return false;
+    
+    
   }
 }
 

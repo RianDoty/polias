@@ -12,10 +12,20 @@ class User {
     if (nickname !== '') this.name = nickname;
   }
   
+  assignCard(cardNum) {
+    this.cardNum = cardNum
+    this.socket.fire('assign-card', cardNum)
+  }
+  
   template() {
     const {name, socket, host} = this;
     const socketId = socket.id;
     return {name, socketId, host}
+  }
+  
+  hasAdmin() {
+    //Determines if a user has perms to change parts of the game
+    return this.host;
   }
 }
 
