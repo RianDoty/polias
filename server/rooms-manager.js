@@ -22,18 +22,19 @@ class RoomsManager {
   }
 
   registerHandlers(socket) {
-    const { io, roomListSync } = this;
+    const { io, roomListSync, rooms } = this;
 
     socket.on("create-room", ({ name: hostName }, name, ack) => {
       const code = randomCode();
 
-      //Create a new room
-      const newRoom = new Room(io, code, socket, roomListSync, {
-        name,
-        hostName
-      });
-      this.rooms[code] = newRoom;
-      roomListSync.create(code, newRoom.template());
+      ////Create a new room
+      //const newRoom = new Room(io, code, socket, roomListSync, {
+      //  name,
+      //  hostName
+      //});
+      //rooms[code] = newRoom;
+      //roomListSync.create(code, newRoom.template());
+      this.createRoom(code, socket, {name, hostName})
 
       //Send the host to the room
       ack(code);
@@ -49,6 +50,15 @@ class RoomsManager {
       if (rooms[code])
         rooms[code].leave(socket);
     });
+  }
+  
+  createRoom(code=randomCode(), host, roomData) {
+    const { roomListSync, io } = this;
+    
+    //Create a new room
+    const newRoom = new Room(io, code, host, roomListSync, roomData);
+    rooms[code] = newRoom;
+    roomListSync.create(code, newRoom.template());
   }
 
   close() {

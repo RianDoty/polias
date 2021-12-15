@@ -25,10 +25,10 @@ class SyncHost {
     if (value === null) {
       value = prop;
       data[key] = value;
+    } else {
+      if (!data[key]) return false;
+      data[key][prop] = value;
     }
-    
-    if (!data[key]) return false;
-    data[key][prop] = value;
 
     io.to(keyword).emit(`sync update ${keyword}`, key, prop, value);
   }

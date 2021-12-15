@@ -15,13 +15,16 @@ function randomFromArray(arr) {
   return arr[randomInt(arr.length)]
 }
 
+//Manages assigning cards from a certain pack to users
 class CardManager {
-  constructor() {
-    const defaultPack = randomFromTable(avatars);    
+  constructor(io, users, pack) {
+    const defaultPack = pack || randomFromTable(avatars);    
     
-    this.users = {};
+    this.users = users ? Object.assign({}, users) : {};
     
+    //Assign
     this.assignPack(defaultPack);
+    Object.values(this.users).forEach(u => this.assignCard(u));
   }
   
   assignPack(pack) {
@@ -30,6 +33,10 @@ class CardManager {
     this.cardPack = pack;
     const unassignedCards = Object.keys(pack);
     this.notEnoughCards = false;
+    
+    //If there are no users yet to consider, return
+    if (!Object.keys(this.users).length) return;
+    console.log(this.users)
     
     //Eliminate ids that users are sitting on
     Object.values(this.users)
@@ -45,17 +52,21 @@ class CardManager {
   }
   
   assignCard(user, id) {
+    // The card specified must already be assigned if it is not present in unassigned cards
     const cardIsAssigned = this.unassignedCards.indexOf(id) === -1
     
     let cardId;
+    // Pick a card randomly if the specified id is taken or not present.
     if (!id || cardIsAssigned) {
       cardId = randomFromArray(this.unassignedCards) || -1;
     } else {
+      // Otherwise, just assign using the given id.
       cardId = id
     }
     
-    this.users[user.id] = user;
-    user.cardId = cardId
+    // Cache the user for if the pack is changed
+    if (!this.users[user.id]) this.users[user.id] = user;
+    user.assignCard(cardId)
     
     if (cardId === -1) { //a card couldn't be found
       this.alertNotEnoughCards();
@@ -64,6 +75,8 @@ class CardManager {
   
   alertNotEnoughCards() {
     this.notEnoughCards = true;
+    
+    //Send something to the client to alert them not enough cards are present
   }
 }
 
