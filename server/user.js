@@ -14,7 +14,7 @@ class User {
   
   assignCard(cardNum) {
     this.cardNum = cardNum
-    this.socket.fire('assign-card', cardNum)
+    this.socket.emit('assign-card', cardNum)
   }
   
   template() {

@@ -1,4 +1,4 @@
-const avatars = require('../src/components/game/avatars')
+const {cardPacks} = require('../src/components/game/avatars')
 
 function randomInt(max=0, min=0) {
   return min + Math.floor(Math.random() * max)
@@ -18,7 +18,7 @@ function randomFromArray(arr) {
 //Manages assigning cards from a certain pack to users
 class CardManager {
   constructor(io, users, pack) {
-    const defaultPack = pack || randomFromTable(avatars);    
+    const defaultPack = pack || randomFromTable(cardPacks);    
     
     this.users = users ? Object.assign({}, users) : {};
     
@@ -67,6 +67,7 @@ class CardManager {
     
     // Cache the user for if the pack is changed
     if (!this.users[user.id]) this.users[user.id] = user;
+
     user.assignCard(cardId)
     
     if (cardId === -1) { //a card couldn't be found
