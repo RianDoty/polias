@@ -1,9 +1,6 @@
 const SyncHost = require("./sync");
 const Room = require('./room')
 const { randomCode, unregisterCode } = require("./random-code");
-const { io } = require("socket.io-client");
-
-const rooms = {};
 
 const noop = ()=>{};
 
@@ -27,13 +24,6 @@ class RoomsManager {
     socket.on("create-room", ({ name: hostName }, name, ack) => {
       const code = randomCode();
 
-      ////Create a new room
-      //const newRoom = new Room(io, code, socket, roomListSync, {
-      //  name,
-      //  hostName
-      //});
-      //rooms[code] = newRoom;
-      //roomListSync.create(code, newRoom.template());
       this.createRoom(code, socket, {name, hostName})
 
       //Send the host to the room
@@ -41,14 +31,14 @@ class RoomsManager {
     });
 
     socket.on('join room', (code, ack = noop) => {
-      if (rooms[code])
-        rooms[code].join(socket);
+      if (this.rooms[code])
+        this.rooms[code].join(socket);
       ack(true);
     });
 
     socket.on('leave room', (code) => {
-      if (rooms[code])
-        rooms[code].leave(socket);
+      if (this.rooms[code])
+        this.rooms[code].leave(socket);
     });
   }
   
@@ -57,7 +47,7 @@ class RoomsManager {
     
     //Create a new room
     const newRoom = new Room(io, code, host, roomListSync, roomData);
-    rooms[code] = newRoom;
+    this.rooms[code] = newRoom;
     roomListSync.create(code, newRoom.template());
   }
 
