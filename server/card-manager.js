@@ -32,6 +32,7 @@ class CardManager {
 
     this.cardPack = pack;
     const unassignedCards = Object.keys(pack);
+    this.unassignedCards = unassignedCards
     this.notEnoughCards = false;
     
     //If there are no users yet to consider, return
