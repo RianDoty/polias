@@ -1,10 +1,18 @@
+import { useContext } from 'react'
+import CardPackContext from '../../contexts/cardPack';
 import avatars from './avatars'
-const defaultAvatar = avatars.default;
+const {default: defaultAvatar, cardPacks} = avatars;
 
-const Avatar = ({pack, cardId}) => {
-  const image = (pack && cardId && avatars[pack][cardId]) || defaultAvatar;
+const Avatar = ({user}) => {
+  const {cardId} = user;
+  const pack = useContext(CardPackContext)
+
+  let image = defaultAvatar;
+  if (cardId !== -1 && pack !== undefined) {
+    image = cardPacks[pack][cardId]
+  }
   
-  return <img src={image} className='avatar'/>;
+  return <img src={image} className='avatar' alt=''/>;
 }
 
 export default Avatar

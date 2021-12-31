@@ -85,9 +85,9 @@ const RoomCreator = () => {
 
     console.log("submitted");
     //Tell the server to create a room with the given name
-    socket.emit("create-room", { name: user.name }, name, code => {
+    socket.emit("create-room", name, code => {
       //After the room is created with a random code, join that room
-      setLocation(`/game/${code}`);
+      setLocation(`/game/${code}`)
     });
   };
 

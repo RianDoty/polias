@@ -5,22 +5,31 @@ class User {
     this.socket = socket;
     this.name = name;
     this.host = false;
+    this.room = null;
+    this.cardId = -1;
     this.id = uuidv4();
+
+    socket.emit('assign-uuid', this.id)
   }
   
   setNickname(nickname) {
     if (nickname !== '') this.name = nickname;
   }
   
-  assignCard(cardNum) {
-    this.cardNum = cardNum
-    this.socket.emit('assign-card', cardNum)
+  assignCard(cardId) {
+    this.cardId = cardId
+    this.socket.emit('assign-card', cardId)
+    setTimeout(()=>{
+      this.room.usersSync.update(this.id, 'cardId', cardId)
+      console.log(`cardId in '${this.room.usersSync.keyword}' for id ${this.id.substring(0,5)}.. updated to ${cardId}`)
+    },2000)
+    
   }
   
   template() {
-    const {name, socket, host} = this;
+    const { name, socket, host, cardId, id } = this;
     const socketId = socket.id;
-    return {name, socketId, host}
+    return { name, socketId, host, cardId, id }
   }
   
   hasAdmin() {

@@ -6,10 +6,15 @@ class SyncHost {
     this.keyword = keyword;
     this.data = startingData;
 
-    io.on("connection", s => {
-      s.on(`sync subscribe ${keyword}`, ack => this.subscribe(s, ack));
-      s.on(`sync unsubscribe ${keyword}`, () => this.unsubscribe(s));
-    });
+    //Connect all future and current sockets
+    io.fetchSockets().then(s => s.forEach(n => this.connect(n)));
+    io.on("connection", s => this.connect(s));
+  }
+
+  connect(socket) {
+    const { keyword } = this;
+    socket.on(`sync subscribe ${keyword}`, ack => this.subscribe(socket, ack));
+    socket.on(`sync unsubscribe ${keyword}`, () => this.unsubscribe(socket));
   }
 
   create(key, value) {
@@ -22,11 +27,11 @@ class SyncHost {
   update(key, prop, value) {
     const { data, io, keyword } = this;
 
-    if (value === null) {
+    if (value === undefined) {
       value = prop;
       data[key] = value;
     } else {
-      if (!data[key]) return false;
+      if (!data[key]) return console.warn(`data assignment to undefined key : ${key} ${prop} ${value}`);
       data[key][prop] = value;
     }
 

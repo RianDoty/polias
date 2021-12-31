@@ -18,13 +18,17 @@ class RoomsManager {
     this.io.on('connection', this.onConnect);
   }
 
+  disconnect() {
+    this.io.off('connection', this.onConnect)
+    delete this.onConnect;
+  }
+
   registerHandlers(socket) {
-    const { io, roomListSync, rooms } = this;
-
-    socket.on("create-room", ({ name: hostName }, name, ack) => {
+    socket.on("create-room", (name, ack = noop) => {
       const code = randomCode();
+      const host = socket.user;
 
-      this.createRoom(code, socket, {name, hostName})
+      this.createRoom(code, host, name)
 
       //Send the host to the room
       ack(code);

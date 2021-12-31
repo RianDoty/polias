@@ -2,14 +2,15 @@ import { useEffect } from "react";
 import useVolatileState from "./volatile-state";
 import { useSocket, useSocketCallbacks } from "./socket";
 
-const useSync = (keyword, def) => {
+const useSync = (keyword, def={}, log=false) => {
   const socket = useSocket();
-  const [store, setStore] = useVolatileState(def || {});
+  const [store, setStore] = useVolatileState(def);
 
   useEffect(() => {
     socket.emit(`sync subscribe ${keyword}`, s => setStore(def => {
       //Prune out elements that were already defined by the client
-      //Prevents 'refreshing' info that the client already knows
+      //Prevents 'refreshing' info that the client should know already,
+      //because the info is likely sourced from themself.
       Object.keys(def).forEach(key => {
         delete s[key];
       })
@@ -36,6 +37,7 @@ const useSync = (keyword, def) => {
         }
         if (!store[key]) return store;
         store[key][prop] = value
+        if (log) console.log(`${keyword} updated: ${key} ${prop} ${value}`)
         
         return store
       })

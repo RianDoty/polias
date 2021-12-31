@@ -6,18 +6,20 @@ const CardManager = require('./card-manager')
 
 //Class to manage data storage for a room, which hosts games
 class Room {
-  constructor(io, code, host, roomListHost, {name = 'unnamed', hostName = 'unnamed'} = {}) {
+  constructor(io, code, host, roomListHost, name = 'unnamed') {
     this.io = io;
     this.code = code;
     this.name = name;
-    this.hostName = hostName;
+    this.hostName = host.name;
     this.users = {}
     
     // Synchronization
-    //Users: {name, cardID}
+    //Users: {name, cardId}
     this.usersSync = new SyncHost(io, `room users ${code}`, {});
     this.stateSync = new SyncHost(io, `room state ${code}`, {
-      state: 'lobby'
+      state: 'lobby',
+      cardPack: 'fruits',
+      foo: 'foo'
     });
     this.roomListSync = roomListHost
     
@@ -26,7 +28,7 @@ class Room {
     this.generateChatRooms();
     
     //Cards
-    this.cardManager = new CardManager(io)
+    this.cardManager = new CardManager(this)
     
     this.host = host
   }
@@ -36,11 +38,11 @@ class Room {
     
     if (!user) return console.log('socket does not have a user!');
     
+    user.room = this;
+
     //Update users
-    this.users[socket.id] = socket.user;
-    
-    //Synchronization
-    this.usersSync.create(socket.id, user.template())
+    this.users[socket.id] = user;
+    this.usersSync.create(user.id, user.template())
     this.updatePCount()
     
     //Disconnected from site = left room
