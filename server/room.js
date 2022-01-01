@@ -6,10 +6,11 @@ const CardManager = require('./card-manager')
 
 //Class to manage data storage for a room, which hosts games
 class Room {
-  constructor(io, code, host, roomListHost, name = 'unnamed') {
+  constructor(io, code, host, manager, roomListHost, name = 'unnamed') {
     this.io = io;
     this.code = code;
     this.name = name;
+    this.manager = manager;
     this.hostName = host.name;
     this.users = {}
     
@@ -41,12 +42,12 @@ class Room {
     user.room = this;
 
     //Update users
-    this.users[socket.id] = user;
+    this.users[user.id] = user;
     this.usersSync.create(user.id, user.template())
     this.updatePCount()
     
     //Disconnected from site = left room
-    socket.once('disconnect', ()=>this.leave(socket))
+    socket.on('disconnect', ()=>this.leave(socket))
     
     //If the user is the only user in the room, give it the Host role
     if (this.pCount == 1) {
@@ -61,17 +62,23 @@ class Room {
   }
   
   leave(socket) {
-    if (!this.users[socket.id]) return; //can't have a socket that never joined leave
-    
+    const {user} = socket
+    if (!this.users[user.id]) return console.warn(`user that never existed left: ${user.id.substring(0,5)}..`); //can't have a socket that never joined leave
+    console.log(`user ${user.id.substring(0,5)}.. left`)
+
     //Update users
-    delete this.users[socket.id]
-    this.usersSync.delete(socket.id);
+    delete this.users[user.id]
+    this.usersSync.delete(user.id);
     this.updatePCount();
     
     //If every user is gone, the room shouldn't exist
-    //Let users join a room for a bit even if it's empty
-    if (this.pCount == 0) {
-      
+    
+    if (this.pCount === 0) {
+      //Let users join a room for a bit even if it's empty
+      setTimeout(()=>{
+        if (this.pCount !== 0) return;
+        this.destroy();
+      }, 20000)
     }
     
     //The host leaving means we have to change things up
@@ -93,7 +100,7 @@ class Room {
       code: this.code,
       hostName: this.hostName,
       pCount: this.pCount,
-      pMax: '∞'
+      pMax: '∞' //TODO: make this actually matter
     }
   }
   
@@ -112,7 +119,8 @@ class Room {
   
   assignHost(socket) {
     this.host = socket;
-    this.usersSync.update(socket.id, 'host', true);
+    const { user } = socket;
+    this.usersSync.update(user.id, 'host', true);
   }
   
   // Chat
@@ -124,8 +132,10 @@ class Room {
   changeCardPack(requester, pack) {
     //Only the host should be able to change the pack
     if (!requester.hasAdmin()) return false;
-    
-    
+  }
+
+  destroy() {
+    this.manager.destroy(this);
   }
 }
 

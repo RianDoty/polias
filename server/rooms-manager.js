@@ -50,13 +50,18 @@ class RoomsManager {
     const { roomListSync, io } = this;
     
     //Create a new room
-    const newRoom = new Room(io, code, host, roomListSync, roomData);
+    const newRoom = new Room(io, code, host, this, roomListSync, roomData);
     this.rooms[code] = newRoom;
     roomListSync.create(code, newRoom.template());
   }
 
   close() {
     this.io.off('connection', this.onConnect);
+  }
+
+  destroy(room) {
+    delete this.rooms[room.code]
+    this.roomListSync.delete(room.code);
   }
 }
 

@@ -1,0 +1,24 @@
+.action-board {
+    flex-shrink: 0;
+    padding: 15px;
+}
+
+.action-board-header {
+    background-color: var(--shade);
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 16px;
+    padding: 3px 3px;
+    margin: -15px -15px 15px -15px;
+    background-color: var(--shade);
+    border-bottom: solid 1px var(--shadow);
+}
+
+.action-group {
+    padding-top: 8px;
+}
+
+.action-group-name {
+    text-align: left;
+    margin-top: -5px;
+}

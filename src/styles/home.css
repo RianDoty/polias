@@ -10,10 +10,10 @@
   display: block;
 }
 
+/*Border between dashboard sections*/
 .dash-section:not(:first-child) {
   border-top: 1px solid var(--highlight);
 }
-
 
 .bottom-logo {
   color: grey;
