@@ -67,6 +67,9 @@ const MessageEntry = ({onSubmit}) => {
   function handleSubmit(e) {
     e.preventDefault();
     
+    //If the message contains no content other than whitespace
+    if (!content.replace(/\s/g, "").length) return false;
+
     onSubmit(content);
     setContent('');
   }

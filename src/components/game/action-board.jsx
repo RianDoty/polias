@@ -10,15 +10,34 @@ const ActionGroup = ({name, children}) => (
     </div>
 )
 
+const SwapSpectatePlayButton = () => {
+    const {playing, setPlaying} = useContext(UserContext);
+
+    const onClick = (e) => {
+        //Toggle whether or not the player is playing or not
+        setPlaying(!playing)
+    }
+
+    return (
+    <button className='button' onClick={onClick}>
+        {playing ? 'Spectate' : 'Play'}
+    </button>
+    )
+}
+
+const UserGroup = () => (
+    <ActionGroup name='User'>
+        <SwapSpectatePlayButton/>
+    </ActionGroup>
+)
+
 const ActionBoard = () => {
     const user = useContext(UserContext);
 
     return (
     <div className='action-board'>
         <div className = 'action-board-header'>Actions</div>
-        <ActionGroup name='User'>
-            <button className='button'>Become a Player</button>
-        </ActionGroup>
+        <UserGroup/>
         <ActionGroup name='Host'>
             <button className='button'>Start Game</button>
         </ActionGroup>

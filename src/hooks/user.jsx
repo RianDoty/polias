@@ -5,6 +5,7 @@ const useUser = () => {
   const [name, setName] = useState();
   const [cardId, setCardId] = useState();
   const [id, setId] = useState()
+  const [playing, setPlaying] = useState(false);
   
   useSocketCallbacks({
     'assign-card': (card) => {
@@ -17,7 +18,7 @@ const useUser = () => {
     }
   })
   
-  return {name, setName, cardId, setCardId};
+  return {name, setName, cardId, setCardId, playing, setPlaying, id, setId};
 }
 
 export default useUser

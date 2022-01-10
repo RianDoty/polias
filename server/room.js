@@ -63,6 +63,7 @@ class Room {
   
   leave(socket) {
     const {user} = socket
+    if (!user) return console.warn('Socket with no user disconnected');
     if (!this.users[user.id]) return console.warn(`user that never existed left: ${user.id.substring(0,5)}..`); //can't have a socket that never joined leave
     console.log(`user ${user.id.substring(0,5)}.. left`)
 
@@ -105,6 +106,7 @@ class Room {
   }
   
   updateList(prop, value) {
+    //Updates the player list for players browsing rooms
     this.roomListSync.update(this.code, prop, value);
   }
   
@@ -118,6 +120,7 @@ class Room {
   }
   
   assignHost(socket) {
+    if (!socket || !socket.user) return console.warn('attempt to make invalid socket host!');
     this.host = socket;
     const { user } = socket;
     this.usersSync.update(user.id, 'host', true);

@@ -63,6 +63,26 @@ class RoomsManager {
     delete this.rooms[room.code]
     this.roomListSync.delete(room.code);
   }
+
+  /**
+   * Get if a room with a certain code exists or not.
+   * 
+   * @param {string} code The code of the room.
+   * @returns Whether or not the room exists.
+   */
+  roomExists(code) {
+    return Boolean(this.rooms[code])
+  }
+
+  /**
+   * Gets an existing Room from a text code.
+   * 
+   * @param {string} code 
+   * @returns {Room} A Room instance if it exists.
+   */
+  getRoom(code) {
+    return this.rooms[code];
+  }
 }
 
 module.exports = RoomsManager;

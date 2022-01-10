@@ -6,7 +6,7 @@ import RoomContext from '../contexts/room';
 import CardPackContext from '../contexts/cardPack';
 
 //Game components
-import SideBar from '../components/game/side-bar'
+import LeftSideBar from '../components/game/left-side-bar'
 import MiddleContent from '../components/game/middle-content'
 
 //Style
@@ -20,7 +20,7 @@ export default function RoomMain({params}) {
     <>
       <RoomContext.Provider value={code}>
         <CardPackContext.Provider value={cardPack}>
-          <SideBar/>
+          <LeftSideBar/>
           <MiddleContent/>
         </CardPackContext.Provider>
       </RoomContext.Provider>
