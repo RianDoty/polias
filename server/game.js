@@ -1,23 +1,29 @@
+const EventEmitter = require('events')
 
+class Game extends EventEmitter {
+  constructor(room, config) {
+    super()
+    
+    this.room = room;
+    this.io = room.io;
+    this.ioRoom = room.ioRoom;
+    this.config = config;
+  }
 
-class Game {
-    constructor(room, config) {
-        this.io = room.io;
-        this.room = room;
-        this.config = config;
-    }
+  start() {
+    this.emit('start');
+    setTimeout(()=>{this.end()},10000) // TEST: end in 10 seconds
+  }
 
-    start() {
+  end(winner='cancelled') {
+    this.announceWinner(winner);
+    this.emit('end', {winner});
+  }
 
-    }
-
-    end(winner) {
-        this.announceWinner(winner);
-    }
-
-    announceWinner(user) {
-        this.io.to(this.room.code).emit('winner', user.template())
-    }
+  announceWinner(user) {
+    if (user='cancelled') return this.ioRoom.emit('game-cancelled');
+    this.ioRoom.emit("winner", user.template());
+  }
 }
 
 module.exports = Game;

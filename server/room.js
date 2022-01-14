@@ -3,11 +3,14 @@ const SyncHost = require('./sync')
 const User = require('./user')
 const ChatRoomManager = require('./chat-manager')
 const CardManager = require('./card-manager')
+const Game = require('./game')
+const Config = require('./config')
 
 //Class to manage data storage for a room, which hosts games
 class Room {
   constructor(io, code, host, manager, roomListHost, name = 'unnamed') {
     this.io = io;
+    this.ioRoom = io.to(this.code);
     this.code = code;
     this.name = name;
     this.manager = manager;
@@ -32,6 +35,16 @@ class Room {
     this.cardManager = new CardManager(this)
     
     this.host = host
+    
+    // Game
+    this.gameConfig = new Config({
+      aboutToStartTime: {
+        type: 'number',
+        value: 10,
+        min: 0,
+        max: 20
+      }
+    });
   }
   
   join(socket) {
@@ -45,6 +58,20 @@ class Room {
     this.users[user.id] = user;
     this.usersSync.create(user.id, user.template())
     this.updatePCount()
+    
+    user.on('changed', diff=>{
+      console.log('changed event recieved')
+      console.log(diff)
+      Object.entries(diff).forEach(([p,v]) => {
+        console.log('updating user: ', p, v)
+        this.usersSync.update(user.id,p,v)
+    })});
+    
+    if (this.noPlayersTimeout) {
+      //Someone's in the room now, so the room shouldn't be destroyed
+      clearTimeout(this.noPlayersTimeout)
+      this.noPlayersTimeout = null;
+    };
     
     //Disconnected from site = left room
     socket.on('disconnect', ()=>this.leave(socket))
@@ -73,10 +100,9 @@ class Room {
     this.updatePCount();
     
     //If every user is gone, the room shouldn't exist
-    
     if (this.pCount === 0) {
       //Let users join a room for a bit even if it's empty
-      setTimeout(()=>{
+      this.noPlayersTimeout = setTimeout(()=>{
         if (this.pCount !== 0) return;
         this.destroy();
       }, 20000)
@@ -88,6 +114,13 @@ class Room {
       const randomUser = Object.values(this.users)[0];
       this.assignHost(randomUser);
     }
+  }
+  
+  listen(socket) {
+    socket.on('start-game-request', () => {
+      if (!this.isHost(socket)) return;
+      this.startGame();
+    })
   }
   
   get pCount() {
@@ -114,6 +147,10 @@ class Room {
     this.updateList('pCount', this.pCount)
   }
   
+  destroy() {
+    this.manager.destroy(this);
+  }
+  
   // Host
   isHost(socket) {
     return (socket.id === this.host.id);
@@ -135,6 +172,12 @@ class Room {
   changeCardPack(requester, pack) {
     //Only the host should be able to change the pack
     if (!requester.hasAdmin()) return false;
+  }
+
+  
+  // Game
+  startGame() {
+   this.ioRoom.emit('game-about-to-start', this.gameConfig.get('aboutToStartTime'));
   }
 
   destroy() {

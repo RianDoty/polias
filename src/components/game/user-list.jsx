@@ -5,15 +5,22 @@ import RoomContext from '../../contexts/room';
 import { useSocket } from '../../hooks/socket';
 import Avatar from './avatar'
 
+const userTemplate = (user, socket) => ({
+  name: user.name,
+  socketId: socket.id,
+  cardId: user.cardId,
+})
+
 const UserList = () => {
   const code = useContext(RoomContext);
   const user = useContext(UserContext);
   const socket = useSocket();
-  const [users] = useSync(`room users ${code}`, {
+  const [users, updateUsers] = useSync(`room users ${code}`, {
     [user.id]: {
       name: user.name,
       socketId: socket.id,
-      cardId: user.cardId
+      cardId: user.cardId,
+      role: (user.playing ? 'Chillin\'' : 'Ready')
     }
   }, true);
   

@@ -7,6 +7,10 @@ const io = new Server(http, {
   path: "/api"
 });
 
+//I'm going to be using a LOT of on('connect') listeners.
+//shoot me if this is a performance dump
+io.setMaxListeners(200);
+
 require('./networking')(io) //Set up networking for the game
 
 // PWAs want HTTPS!

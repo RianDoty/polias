@@ -39,10 +39,18 @@ describe("Socket tests", () => {
   })
 
   // Networking
+  //User
   let myUser;
   test('User is created for sockets', () => {
     myUser = serverSocket.user;
     expect(myUser.socket).toBe(serverSocket);
+  })
+  
+  test('User is a valid EventEmitter', ()=>{
+    let test = false;
+    serverSocket.user.on('test', ()=>test = true);
+    serverSocket.user.emit('test')
+    expect(test).toBe(true)
   })
 
   let myRoom;
@@ -53,10 +61,6 @@ describe("Socket tests", () => {
       myRoom = roomsManager.getRoom(code);
       expect(myRoom).toBeTruthy()
       done()
-    })
-  })
-
-  test('Room accepts users', done => {
-
-  })
+    });
+  });
 });
