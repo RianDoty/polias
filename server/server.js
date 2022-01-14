@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 const io = new Server(http, {
   path: "/api"
 });
+
 require('./networking')(io) //Set up networking for the game
 
 // PWAs want HTTPS!

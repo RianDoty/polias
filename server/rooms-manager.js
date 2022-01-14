@@ -15,6 +15,7 @@ class RoomsManager {
 
   connect() {
     this.onConnect = (socket)=>this.registerHandlers(socket)
+    //Doing connections like this is okay, as this is initalized at the beginning of the project
     this.io.on('connection', this.onConnect);
   }
 
