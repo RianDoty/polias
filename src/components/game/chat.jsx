@@ -48,7 +48,7 @@ const MessageList = ({messages={}}) => {
 const Message = ({data: {author, content}}) => {
   return (
     <li className='message'>
-      <Avatar cardId = {author.cardId}/>
+      <Avatar user={author}/>
       <div className='message-container'>
         <div className='message-author'>{author.name}</div>
         <div className='message-content'>{content}</div>
@@ -67,6 +67,9 @@ const MessageEntry = ({onSubmit}) => {
   function handleSubmit(e) {
     e.preventDefault();
     
+    //If the message contains no content other than whitespace
+    if (!content.replace(/\s/g, "").length) return false;
+
     onSubmit(content);
     setContent('');
   }

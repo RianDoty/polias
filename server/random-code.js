@@ -1,7 +1,7 @@
 //Generates a random code that cannot have a duplicate
 const usedCodes = {};
 
-const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""); //Array of all capital letters
 function randomCode(length = 4) {
   const maxAttempts = 100;
   let attempts = 0;

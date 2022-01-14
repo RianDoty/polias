@@ -4,13 +4,14 @@ const Client = require("socket.io-client");
 const networking = require('../server/networking.js');
 const roomsManager = require('../server/rooms-manager.js')
 
+
 describe("Polias", () => {
-  let io, serverSocket, clientSocket;
+  let io, serverSocket, clientSocket, roomsManager;
 
   beforeAll((done) => {
     const httpServer = createServer();
     io = new Server(httpServer);
-    networking(io);
+    roomsManager = networking(io).roomsManager;
     httpServer.listen(() => {
       const port = httpServer.address().port;
       clientSocket = new Client(`http://localhost:${port}`);
@@ -28,7 +29,7 @@ describe("Polias", () => {
 
 
   //Tests
-  test('transfers data', done => {
+  test('Socket transfers data', done => {
     clientSocket.on('hello', arg => {
       expect(arg).toBe('world')
       done()
@@ -37,7 +38,29 @@ describe("Polias", () => {
     serverSocket.emit('hello', 'world')
   })
 
-  test('creates rooms', done => {
-    clientSocket.emit()
+  // Networking
+  //User
+  let myUser;
+  test('User is created for sockets', () => {
+    myUser = serverSocket.user;
+    expect(myUser.socket).toBe(serverSocket);
   })
+  
+  test('User is a valid EventEmitter', ()=>{
+    let test = false;
+    serverSocket.user.on('test', ()=>test = true);
+    serverSocket.user.emit('test')
+    expect(test).toBe(true)
+  })
+
+  let myRoom;
+  test('RoomsManager creates rooms', done => {
+    clientSocket.emit('create-room', 'foo', code => {
+      expect(code).toMatch(/[A-Z]+/)
+      expect(roomsManager.roomExists(code)).toBe(true)
+      myRoom = roomsManager.getRoom(code);
+      expect(myRoom).toBeTruthy()
+      done()
+    });
+  });
 });

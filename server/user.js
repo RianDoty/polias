@@ -1,31 +1,50 @@
 const {v4: uuidv4} = require('uuid');
+const EventEmitter = require('events')
 
-class User {
+class User extends EventEmitter {
   constructor(socket, {name='Unknown'}={}) {
+    super();
+    this.on('changed', diff => this.socket.emit('changed', diff));
+    
     this.socket = socket;
     this.name = name;
     this.host = false;
-    this.id = uuidv4();
+    this.room = null;
+    this.cardId = -1;
+    this.generateUuid();
   }
   
   setNickname(nickname) {
-    if (nickname !== '') this.name = nickname;
+    this.name = nickname;
+    console.log(`emitting change: {name: ${nickname}}`)
+    this.emit('changed', {name: nickname})
   }
   
-  assignCard(cardNum) {
-    this.cardNum = cardNum
-    this.socket.fire('assign-card', cardNum)
+  assignCard(cardId) {
+    this.cardId = cardId
+    this.socket.emit('assign-card', cardId)
+    this.emit('changed', {cardId});
+    console.log(`cardId in '${this.room.usersSync.keyword}' for id ${this.id.substring(0,5)}.. updated to ${cardId}`)
   }
   
   template() {
-    const {name, socket, host} = this;
+    const { name, socket, host, cardId, id } = this;
     const socketId = socket.id;
-    return {name, socketId, host}
+    return { name, socketId, host, cardId, id }
+  }
+  
+  isHost() {
+    return this.room.isHost(this.socket);
+  }
+  
+  generateUuid() {
+    this.id = uuidv4();
+    this.emit('changed', {id: this.id})
   }
   
   hasAdmin() {
     //Determines if a user has perms to change parts of the game
-    return this.host;
+    return this.isHost();
   }
 }
 

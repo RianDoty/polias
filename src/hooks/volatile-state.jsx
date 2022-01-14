@@ -3,7 +3,7 @@ import { useState } from 'react';
 const useForceUpdate = () => {
   const [, updateIndex] = useState(0);
   
-  return () => updateIndex(i=>{console.log(i); return i+1;});
+  return () => updateIndex(i=>i+1);
 }
 
 function useVolatileState(def) {

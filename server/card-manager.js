@@ -1,4 +1,5 @@
-const avatars = require('../src/components/game/avatars')
+const {cardPacks} = require('../src/components/game/avatars')
+const SyncHost = require('./sync.js');
 
 function randomInt(max=0, min=0) {
   return min + Math.floor(Math.random() * max)
@@ -17,22 +18,31 @@ function randomFromArray(arr) {
 
 //Manages assigning cards from a certain pack to users
 class CardManager {
-  constructor(io, users, pack) {
-    const defaultPack = pack || randomFromTable(avatars);    
-    
-    this.users = users ? Object.assign({}, users) : {};
-    
+  constructor(room) {
+    this.room = room;
+
+    const defaultPack = randomFromTable(cardPacks);
+    this.users = {};
+
     //Assign
     this.assignPack(defaultPack);
     Object.values(this.users).forEach(u => this.assignCard(u));
   }
   
+  getPackName(pack) {
+    return Object.entries(cardPacks).find(([, v]) => v == pack)[0]
+  }
+
   assignPack(pack) {
     if (!pack) return false;
 
     this.cardPack = pack;
     const unassignedCards = Object.keys(pack);
+    this.unassignedCards = unassignedCards
     this.notEnoughCards = false;
+    this.room.stateSync.update('cardPack', this.getPackName(pack));
+
+    //Update the room's state
     
     //If there are no users yet to consider, return
     if (!Object.keys(this.users).length) return;
@@ -66,6 +76,7 @@ class CardManager {
     
     // Cache the user for if the pack is changed
     if (!this.users[user.id]) this.users[user.id] = user;
+
     user.assignCard(cardId)
     
     if (cardId === -1) { //a card couldn't be found
