@@ -7,14 +7,21 @@ const useUser = () => {
   const [id, setId] = useState()
   const [playing, setPlaying] = useState(false);
   
+  const stateCallbacks = {
+    cardId: cardId => setCardId(cardId),
+    id: id => setId(id),
+    name: name => setName(name)
+  }
+  
   useSocketCallbacks({
-    'assign-card': (card) => {
-      setCardId(card)
-      console.log(`card assigned from server to ${card}`)
-    },
-    'assign-uuid': (id) => {
-      setId(id);
-      console.log(`uuid recieved as: ${id}`)
+    'changed': (diff) => {
+      Object.entries(diff).forEach(([prop,value]) =>{
+        const callback = stateCallbacks[prop];
+        
+        if (!callback) return false;
+        
+        callback(value);
+      })
     }
   })
   

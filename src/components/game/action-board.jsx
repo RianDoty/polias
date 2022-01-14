@@ -1,5 +1,7 @@
 import { useContext } from 'react';
 import UserContext from '../../contexts/user';
+import RoomContext from '../../contexts/room';
+import useRoom from '../../hooks/room'
 
 import '../../styles/action-board.css'
 
@@ -25,10 +27,19 @@ const SwapSpectatePlayButton = () => {
     )
 }
 
+const StartGameButton = () => {
+  const {} = useContext(RoomContext);
+}
+
 const UserGroup = () => (
     <ActionGroup name='User'>
         <SwapSpectatePlayButton/>
     </ActionGroup>
+)
+
+const HostGroup = () => (
+  <ActionGroup name='Host'>
+  </ActionGroup>
 )
 
 const ActionBoard = () => {

@@ -8,6 +8,7 @@ import CardPackContext from '../contexts/cardPack';
 //Game components
 import LeftSideBar from '../components/game/left-side-bar'
 import MiddleContent from '../components/game/middle-content'
+import NameEntryScreen from '../components/game/name-entry-screen';
 
 //Style
 import '../styles/game.css'
@@ -22,6 +23,7 @@ export default function RoomMain({params}) {
         <CardPackContext.Provider value={cardPack}>
           <LeftSideBar/>
           <MiddleContent/>
+          <NameEntryScreen/>
         </CardPackContext.Provider>
       </RoomContext.Provider>
     </>
