@@ -56,6 +56,7 @@ const NameEntry = ({ user }) => {
         type="text"
         className="transparent-input"
         value={inpVal}
+        maxLength='20'
         onChange={e => {
           updateInpVal(e.target.value);
         }}

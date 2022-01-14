@@ -21,8 +21,12 @@ const NameEntryPrompt = () => {
   
   return (
     <form onSubmit={onSubmit}>
-      <input type='text' value={content} onChange={e=>setContent(e.target.value)}/>
-      <input type='submit'/>
+      <input 
+        type='text' 
+        value={content} 
+        onChange={e=>setContent(e.target.value)}
+        maxLength='20'
+      />
     </form>
   )
 }
@@ -35,7 +39,6 @@ const NameEntryScreen = () => {
   return (
     <div class='name-entry-screen' active={+active}>
       <h1>Set Your Name:</h1>
-      <br/>
       <NameEntryPrompt/>
     </div>
   )

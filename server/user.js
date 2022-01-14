@@ -2,6 +2,8 @@ const {v4: uuidv4} = require('uuid');
 const EventEmitter = require('events')
 
 class User extends EventEmitter {
+  static maxNicknameLength = 20
+
   constructor(socket, {name='Unknown'}={}) {
     super();
     this.on('changed', diff => this.socket.emit('changed', diff));
@@ -15,8 +17,10 @@ class User extends EventEmitter {
   }
   
   setNickname(nickname) {
+    //Verification
+    if (nickname.length > User.maxNicknameLength) return false;
+
     this.name = nickname;
-    console.log(`emitting change: {name: ${nickname}}`)
     this.emit('changed', {name: nickname})
   }
   
