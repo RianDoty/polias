@@ -173,10 +173,15 @@ class Room {
     //Only the host should be able to change the pack
     if (!requester.hasAdmin()) return false;
   }
+
   
   // Game
   startGame() {
    this.ioRoom.emit('game-about-to-start', this.gameConfig.get('aboutToStartTime'));
+  }
+
+  destroy() {
+    this.manager.destroy(this);
   }
 }
 

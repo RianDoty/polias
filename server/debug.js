@@ -1,5 +1,4 @@
 //Tracks the amount of certain things for memory leak detection
-
 const debugOn=false;
 const debugValues = {};
 module.exports = function increment(name = "default") {

@@ -3,6 +3,7 @@ const ChatRoom = require('./chat-room')
 
 class ChatRoomManager {
   constructor(io, roomCode) {
+
     /** The SocketIO Server. */
     this.io = io;
     /** The four-letter code for the user's current room. 
