@@ -39,7 +39,7 @@ const NameEntryScreen = () => {
   return (
     <div class="name-entry-screen" active={+active}>
       <h1>Set Your Name:</h1>
-      <NameEntryPrompt />
+      <NameEntryPrompt/>
     </div>
   );
 };
