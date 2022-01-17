@@ -173,9 +173,11 @@
 .name-entry-screen {
   /*Fills the entire screen*/
   position: fixed;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgb(0 0 0 / 20%);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgb(0 0 0 / 50%);
   
   /*Center Elements*/
   display: flex;
@@ -194,11 +196,31 @@
   pointer-events: auto;
 }
 
-.name-entry-screen > form {
-  display: block;
+.name-entry-screen > h1 {
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .name-entry-screen input {
+  width: 200px;
+  padding: 0 10px;
+
+  /*Border*/
+  border-top: none;
   border-bottom: 2px solid grey;
-  background-color: none;
+  border-left: none;
+  border-right: none;
+  outline: none;
+  transition: border-bottom-color 0.25s;
+
+  /*Color*/
+  background: none;
+  color:white;
+
+  /*Font*/
+  font-size: x-large;
+}
+
+.name-entry-screen input[type=text]:focus-visible {
+  border-bottom: 2px solid lightgrey;
 }

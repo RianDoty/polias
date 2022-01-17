@@ -5,7 +5,7 @@ const networking = require('../server/networking.js');
 const roomsManager = require('../server/rooms-manager.js')
 
 
-describe("Polias", () => {
+describe("Socket tests", () => {
   let io, serverSocket, clientSocket, roomsManager;
 
   beforeAll((done) => {
@@ -56,8 +56,8 @@ describe("Polias", () => {
   let myRoom;
   test('RoomsManager creates rooms', done => {
     clientSocket.emit('create-room', 'foo', code => {
-      expect(code).toMatch(/[A-Z]+/)
-      expect(roomsManager.roomExists(code)).toBe(true)
+      expect(code).toMatch(/[A-Z]+/) //Expect the code to be a string of one or more capital letters
+      expect(roomsManager.roomExists(code)).toBe(true);
       myRoom = roomsManager.getRoom(code);
       expect(myRoom).toBeTruthy()
       done()
