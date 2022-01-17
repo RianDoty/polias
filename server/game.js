@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 
 class Game extends EventEmitter {
-  constructor(room, config) {
+  constructor(room, config=room.gameConfig) {
     super()
     
     this.room = room;
@@ -21,7 +21,7 @@ class Game extends EventEmitter {
   }
 
   announceWinner(user) {
-    if (user='cancelled') return this.ioRoom.emit('game-cancelled');
+    if (user='cancelled') return;
     this.ioRoom.emit("winner", user.template());
   }
 }

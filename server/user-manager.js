@@ -5,8 +5,10 @@ const User = require('./user');
 
 module.exports = (io) => {
   io.on('connection', (socket) => {
-    socket.user = new User(socket)
+    const user = new User(socket)
+    socket.user = user;
     
-    socket.on('set nickname', nickname => socket.user.setNickname(nickname));
+    socket.on('set nickname', nickname => user.setNickname(nickname));
+    socket.on('toggle-ready', ready => user.setReady(ready));
   })
 }
