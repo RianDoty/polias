@@ -19,6 +19,7 @@ const useSync = (keyword, def={}, log=false) => {
         delete s[key];
       })
 
+      if (log) console.log(`${keyword} recieved:`, s);
       return s;
     }));
     return () => socket.emit(`sync unsubscribe ${keyword}`);
