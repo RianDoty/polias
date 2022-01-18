@@ -25,26 +25,44 @@ class RoomsManager {
   }
 
   registerHandlers(socket) {
-    socket.on("create-room", (name, ack = noop) => {
-      const code = randomCode();
-      const host = socket.user;
+    const callbacks = {
+      onCreateRoom: (name, ack = noop) => {
+        const code = randomCode();
+        const host = socket.user;
+  
+        this.createRoom(code, host, name)
+  
+        //Send the host to the room
+        ack(code);
+      },
 
-      this.createRoom(code, host, name)
+      onJoinRoom: (code, ack = noop) => {
+        if (this.rooms[code])
+          this.rooms[code].join(socket);
+        ack(true);
+      },
 
-      //Send the host to the room
-      ack(code);
-    });
+      onLeaveRoom: (code) => {
+        if (this.rooms[code])
+          this.rooms[code].leave(socket);
+      },
 
-    socket.on('join room', (code, ack = noop) => {
-      if (this.rooms[code])
-        this.rooms[code].join(socket);
-      ack(true);
-    });
+      onDisconnect: () => {
+        this.unregisterHandlers(socket, callbacks)
+      }
+    };
 
-    socket.on('leave room', (code) => {
-      if (this.rooms[code])
-        this.rooms[code].leave(socket);
-    });
+    socket.on("create-room", callbacks.onCreateRoom);
+    socket.on('join room', callbacks.onJoinRoom);
+    socket.on('leave room', callbacks.onLeaveRoom);
+    socket.on('disconnect', callbacks.onDisconnect);
+  }
+
+  unregisterHandlers(socket, callbacks) {
+    socket.off("create-room", callbacks.onCreateRoom);
+    socket.off('join room', callbacks.onJoinRoom);
+    socket.off('leave room', callbacks.onLeaveRoom);
+    socket.off('disconnect', callbacks.onDisconnect);
   }
   
   createRoom(code=randomCode(), host, roomData) {

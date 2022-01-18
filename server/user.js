@@ -51,8 +51,9 @@ class User extends EventEmitter {
       cardId,
       id,
       ready,
+      role
     } = this;
-    return { name, socketId, host, cardId, id, ready };
+    return { name, socketId, host, cardId, id, ready, role };
   }
 
   isHost() {

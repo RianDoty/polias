@@ -46,8 +46,16 @@ class Room {
     });
   }
   
+  /**Don't call this one, this is for event listeners*/
+  onChange(diff) {
+    Object.entries(diff).forEach(([p,v]) => {
+      this.room.usersSync.update(this.id,p,v)
+    })
+  }
+
   join(socket) {
     const { user } = socket;
+    console.log(`user ${user.id.substring(0,5)}.. joined`)
     
     if (!user) return console.log('socket does not have a user!');
     
@@ -58,13 +66,7 @@ class Room {
     this.usersSync.create(user.id, user.template())
     this.updatePCount()
     
-    user.on('changed', diff=>{
-      console.log('changed event recieved')
-      console.log(diff)
-      Object.entries(diff).forEach(([p,v]) => {
-        console.log('updating user: ', p, v)
-        this.usersSync.update(user.id,p,v)
-    })});
+    this.bind(user);
     
     if (this.noPlayersTimeout) {
       //Someone's in the room now, so the room shouldn't be destroyed
@@ -146,10 +148,6 @@ class Room {
     this.updateList('pCount', this.pCount)
   }
   
-  destroy() {
-    this.manager.destroy(this);
-  }
-  
   // Host
   isHost(socket) {
     return (socket.id === this.host.id);
@@ -173,6 +171,13 @@ class Room {
     if (!requester.hasAdmin()) return false;
   }
 
+  bind(user) {
+    user.on('changed', this.onChange)
+  }
+
+  unbind(user) {
+    user.off('changed', this.onChange)
+  }
   
   // Game
   startGame() {
@@ -181,6 +186,7 @@ class Room {
 
   destroy() {
     this.manager.destroy(this);
+    Object.values(this.users).forEach(u => this.unbind(u))
   }
 }
 

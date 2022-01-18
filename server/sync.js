@@ -57,6 +57,7 @@ class SyncHost {
     const { data, io, keyword } = this;
 
     if (value === undefined) {
+      if (typeof data[key] === 'object' && typeof value !== 'object') throw Error('Object store overwritten!')
       value = prop;
       data[key] = value;
     } else {

@@ -1,31 +1,25 @@
-import { useState } from 'react';
-import { useSocketCallbacks } from '../hooks/socket'
+import useVolatileState from './volatile-state';
+import { useSocketCallbacks } from './socket'
 
 const useUser = () => {
-  const [name, setName] = useState();
-  const [cardId, setCardId] = useState();
-  const [id, setId] = useState()
-  const [playing, setPlaying] = useState(false);
-  
-  const stateCallbacks = {
-    cardId: cardId => setCardId(cardId),
-    id: id => setId(id),
-    name: name => setName(name)
-  }
-  
+  const [state, updateState] = useVolatileState({
+    name: '',
+    cardId: -1,
+    id: null,
+    playing: false,
+    host: false
+  })
+
   useSocketCallbacks({
     'changed': (diff) => {
-      Object.entries(diff).forEach(([prop,value]) =>{
-        const callback = stateCallbacks[prop];
-        
-        if (!callback) return false;
-        
-        callback(value);
-      })
+      Object.entries(diff).forEach(([prop, value]) => updateState(user => {
+        user[prop] = value;
+        return user}));
     }
   })
-  
-  return {name, setName, cardId, setCardId, playing, setPlaying, id, setId};
+
+  state.update = (prop, value) => updateState(s => {s[prop] = value;return s})
+  return state
 }
 
 export default useUser

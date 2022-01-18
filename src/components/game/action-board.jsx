@@ -14,13 +14,14 @@ const ActionGroup = ({ name, children }) => (
 );
 
 const SwapSpectatePlayButton = () => {
-  const { playing, setPlaying } = useContext(UserContext);
+  const user = useContext(UserContext);
+  const {playing} = user;
   const socket = useSocket();
 
   const onClick = (e) => {
     //Toggle whether or not the player is playing or not
     const newState = !playing;
-    setPlaying(newState);
+    user.update('playing', newState);
     socket.emit("toggle-ready", newState);
   };
 
@@ -41,20 +42,22 @@ const UserGroup = () => (
   </ActionGroup>
 );
 
-const HostGroup = () => <ActionGroup name="Host"></ActionGroup>;
-
-const ActionBoard = () => {
+const HostGroup = () => {
   const user = useContext(UserContext);
+  const show = user.host;
 
-  return (
-    <div className="action-board">
-      <div className="action-board-header">Actions</div>
-      <UserGroup />
-      <ActionGroup name="Host">
-        <button className="button">Start Game</button>
-      </ActionGroup>
-    </div>
-  );
+  if (show) return (<ActionGroup name="Host">
+
+  </ActionGroup>);
+  return null;
 };
+
+const ActionBoard = () => (
+  <div className="action-board">
+    <div className="action-board-header">Actions</div>
+    <UserGroup />
+    <HostGroup />
+  </div>
+);
 
 export default ActionBoard;
