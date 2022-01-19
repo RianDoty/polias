@@ -166,7 +166,7 @@ export default function Home() {
   return (
     <div className="narrow">
       <Section>
-        <h1>Currently developing (and very broken), sorry! -Rian&nbsp;D.</h1>
+        <h1>Okay, not broken anymore. Sorry! -Rian&nbsp;D.</h1>
         <p>
           Polias is a deception game where <em>everyone</em> gets to have fun.
         </p>

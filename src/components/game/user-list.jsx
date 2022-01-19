@@ -22,7 +22,6 @@ const UserList = () => {
   // useEffect(() => {
   //   updateUsers(u => {
   //     if (!user.id) return u;
-  //     console.log('updating user template client-side!')
   //     u[user.id] = template
   //     return u
   //   })
