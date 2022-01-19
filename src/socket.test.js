@@ -1,9 +1,52 @@
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+const { act, render } = require("@testing-library/react")
+
 const Client = require("socket.io-client");
 const networking = require('../server/networking.js');
 const roomsManager = require('../server/rooms-manager.js')
+const SyncHost = require('../server/sync')
+import useSync from './hooks/sync'
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(()=>resolve(),ms))
+}
+
+async function waitFor(cb, timeout) {
+  const timestep = 100;
+  let timeSpent = 0;
+  let timedOut = false;
+  
+  while (true) {
+    try {
+      await sleep(timestep)
+      timeSpent += timestep;
+      cb();
+      break;
+    } catch {}
+    if (timeSpent >= timeout) {
+      timedOut = true;
+      break;
+    }
+  }
+  
+  if (timedOut) {
+
+  }
+}
+
+function renderHook(hook, args) {
+  let result = {};
+
+  function TestComponent({ hookArgs }) {
+    result.current = hook(...hookArgs);
+    return null;
+  }
+
+  render(<TestComponent hookArgs={args} />);
+
+  return result;
+}
 
 describe("Socket tests", () => {
   let io, serverSocket, clientSocket, roomsManager;
@@ -63,4 +106,25 @@ describe("Socket tests", () => {
       done()
     });
   });
+  
+  
+  
+  describe('SyncHost tests', () => {
+    let mySyncHost
+    
+    beforeAll(() => {
+      mySyncHost = new SyncHost(io, 'test', {foo: 'foostring'})
+    })
+    
+    afterAll(() => {
+
+    })
+    
+    it('should transmit basic data on subscribe', async()=>{
+      const result = renderHook(useSync, 'test')
+      await waitFor(()=>{
+        expect(result.current[0]).toEqual({foo: 'foostring'})
+      }, 2000)
+    })
+  })
 });

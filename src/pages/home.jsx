@@ -39,10 +39,10 @@ const NameEntry = ({ user }) => {
     setErr("");
     if (inpVal) {
       //The input is valid, set the user's name
-      user.setName(inpVal);
+      user.update('name', inpVal);
       socket.emit('set nickname', inpVal);
     }
-    else setErr("Invalid name!");
+    else throw Error("Invalid name!");
   }
 
   let errComponent;
@@ -58,7 +58,8 @@ const NameEntry = ({ user }) => {
         value={inpVal}
         maxLength='20'
         onChange={e => {
-          updateInpVal(e.target.value);
+          try{updateInpVal(e.target.value)}
+          catch(error){setErr(error)}
         }}
       />
       <input type="submit" className="button" value="✓" />
@@ -165,7 +166,7 @@ export default function Home() {
   return (
     <div className="narrow">
       <Section>
-        <h1>Hello, and welcome!</h1>
+        <h1>Currently developing (and very broken), sorry! -Rian&nbsp;D.</h1>
         <p>
           Polias is a deception game where <em>everyone</em> gets to have fun.
         </p>

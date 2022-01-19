@@ -1,118 +1,114 @@
-const SyncHost = require("./sync");
-const User = require("./user");
-const ChatRoomManager = require("./chat-manager");
-const CardManager = require("./card-manager");
-const Game = require("./game");
-const Config = require("./config");
+const SyncHost = require('./sync')
+const User = require('./user')
+const ChatRoomManager = require('./chat-manager')
+const CardManager = require('./card-manager')
+const Game = require('./gameAssets/game')
+const Config = require('./config')
 
 //Class to manage data storage for a room, which hosts games
 class Room {
-  constructor(io, code, host, manager, roomListHost, name = "unnamed") {
+  constructor(io, code, host, manager, roomListHost, name = 'unnamed') {
     this.io = io;
     this.ioRoom = io.to(this.code);
     this.code = code;
     this.name = name;
     this.manager = manager;
     this.hostName = host.name;
-    this.users = {};
-
+    this.users = {}
+    
     // Synchronization
     //Users: {name, cardId}
     this.usersSync = new SyncHost(io, `room users ${code}`, {});
     this.stateSync = new SyncHost(io, `room state ${code}`, {
-      state: "lobby",
-      cardPack: "fruits",
-      foo: "foo",
+      state: 'lobby',
+      cardPack: 'fruits',
+      foo: 'foo'
     });
-    this.roomListSync = roomListHost;
-
+    this.roomListSync = roomListHost
+    
     // Chat
     this.chatManager = new ChatRoomManager(io, code);
     this.generateChatRooms();
-
+    
     //Cards
-    this.cardManager = new CardManager(this);
-
-    this.host = host;
-
+    this.cardManager = new CardManager(this)
+    
+    this.host = host
+    
     // Game
     this.gameConfig = new Config({
       aboutToStartTime: {
-        type: "number",
+        type: 'number',
         value: 10,
         min: 0,
-        max: 20,
-      },
+        max: 20
+      }
     });
+  }
+  
+  /**Don't call this one, this is for event listeners*/
+  onChange(diff) {
+    Object.entries(diff).forEach(([p,v]) => {
+      this.room.usersSync.update(this.id,p,v)
+    })
   }
 
   join(socket) {
     const { user } = socket;
-
-    if (!user) return console.log("socket does not have a user!");
-
+    console.log(`user ${user.id.substring(0,5)}.. joined`)
+    
+    if (!user) return console.log('socket does not have a user!');
+    
     user.room = this;
 
     //Update users
     this.users[user.id] = user;
-    this.usersSync.create(user.id, user.template());
-    this.updatePCount();
-
-    //Whenever a part of the user changes, reflect that in the user list
-    user.on("changed", (diff) => {
-      console.log("changed event recieved");
-      console.log(diff);
-      Object.entries(diff).forEach(([p, v]) => {
-        console.log("updating user: ", p, v);
-        this.usersSync.update(user.id, p, v);
-      });
-    });
-
-    //If the room is about to destroy itself because of no players
+    this.usersSync.create(user.id, user.template())
+    this.updatePCount()
+    
+    this.bind(user);
+    
     if (this.noPlayersTimeout) {
       //Someone's in the room now, so the room shouldn't be destroyed
-      clearTimeout(this.noPlayersTimeout);
+      clearTimeout(this.noPlayersTimeout)
       this.noPlayersTimeout = null;
-    }
-
+    };
+    
     //Disconnected from site = left room
-    socket.on("disconnect", () => this.leave(socket));
-
+    socket.on('disconnect', ()=>this.leave(socket))
+    
     //If the user is the only user in the room, give it the Host role
     if (this.pCount == 1) {
       this.assignHost(socket);
     }
-
+    
     //Join the socket into the lobby by default
-    this.chatManager.joinSocket(socket, "lobby");
+    this.chatManager.joinSocket(socket, 'lobby');   
 
     //Give the user a random card by default
     this.cardManager.assignCard(user);
   }
-
+  
   leave(socket) {
-    const { user } = socket;
-    if (!user) return console.warn("Socket with no user disconnected");
-    if (!this.users[user.id])
-      return console.warn(
-        `user that never existed left: ${user.id.substring(0, 5)}..`
-      ); //can't have a socket that never joined leave
-    console.log(`user ${user.id.substring(0, 5)}.. left`);
+    const {user} = socket
+    if (!user) return console.warn('Socket with no user disconnected');
+    if (!this.users[user.id]) return console.warn(`user that never existed left: ${user.id.substring(0,5)}..`); //can't have a socket that never joined leave
+    console.log(`user ${user.id.substring(0,5)}.. left`)
 
     //Update users
-    delete this.users[user.id];
+    delete this.users[user.id]
     this.usersSync.delete(user.id);
     this.updatePCount();
-
+    
     //If every user is gone, the room shouldn't exist
-    if (this.pCount <= 0) {
+    if (this.pCount === 0) {
       //Let users join a room for a bit even if it's empty
-      this.noPlayersTimeout = setTimeout(() => {
+      this.noPlayersTimeout = setTimeout(()=>{
         if (this.pCount !== 0) return;
         this.destroy();
-      }, 20000);
+      }, 20000)
     }
-
+    
     //The host leaving means we have to change things up
     if (this.isHost(socket) && this.pCount > 0) {
       //Pick a 'random' user
@@ -120,78 +116,77 @@ class Room {
       this.assignHost(randomUser);
     }
   }
-
+  
   listen(socket) {
-    socket.on("start-game-request", () => {
+    socket.on('start-game-request', () => {
       if (!this.isHost(socket)) return;
       this.startGame();
-    });
+    })
   }
-
+  
   get pCount() {
     const count = Object.keys(this.users).length;
-    return count;
+    return  count;
   }
-
+  
   template() {
     return {
       name: this.name,
       code: this.code,
       hostName: this.hostName,
       pCount: this.pCount,
-      pMax: "∞", //TODO: make this actually matter
-    };
+      pMax: '∞' //TODO: make this actually matter
+    }
   }
-
+  
   updateList(prop, value) {
     //Updates the player list for players browsing rooms
     this.roomListSync.update(this.code, prop, value);
   }
-
-  updatePCount() {
-    this.updateList("pCount", this.pCount);
+  
+  updatePCount() { 
+    this.updateList('pCount', this.pCount)
   }
-
-  destroy() {
-    this.manager.destroy(this);
-  }
-
+  
   // Host
   isHost(socket) {
-    return socket.id === this.host.id;
+    return (socket.id === this.host.id);
   }
-
+  
   assignHost(socket) {
-    if (!socket || !socket.user)
-      return console.warn("attempt to make invalid socket host!");
+    if (!socket || !socket.user) return console.warn('attempt to make invalid socket host!');
     this.host = socket;
     const { user } = socket;
-    this.usersSync.update(user.id, "host", true);
+    this.usersSync.update(user.id, 'host', true);
   }
-
+  
   // Chat
   generateChatRooms() {
-    this.chatManager.createRoom("lobby");
+    this.chatManager.createRoom('lobby')
   }
-
+  
   // Cards
   changeCardPack(requester, pack) {
     //Only the host should be able to change the pack
     if (!requester.hasAdmin()) return false;
   }
 
-  // Game
-  startGame() {
-    const time = this.gameConfig.get("aboutToStartTime")
-    this.ioRoom.emit("game-about-to-start", time)
-    setTimeout(()=>{
-      const game = this.createGame()
-      game.start();
-    },time*1000)
+  bind(user) {
+    user.on('changed', this.onChange)
+  }
+
+  unbind(user) {
+    user.off('changed', this.onChange)
   }
   
-  createGame() {
-    const game = new Game(this);
+  // Game
+  startGame() {
+   this.ioRoom.emit('game-about-to-start', this.gameConfig.get('aboutToStartTime'));
+  }
+
+  destroy() {
+    this.manager.destroy(this);
+    Object.values(this.users).forEach(u => this.unbind(u))
   }
 }
 

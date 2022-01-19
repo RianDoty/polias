@@ -8,10 +8,15 @@ const useForceUpdate = () => {
 
 function useVolatileState(def) {
   //A state that refreshes EVERY time a change is made.
-  const [state, setState] = useState(def);
+  const [state] = useState(def);
   const forceUpdate = useForceUpdate()
   
-  return [state, (v) => {setState(v); forceUpdate()}];
+  return [state, (v) => {
+    //Check if the callback returns false
+    const newState = v(state);
+    if (newState === false) return forceUpdate();
+    forceUpdate() //The table mutations were already made
+  }];
 }
 
 export default useVolatileState;
