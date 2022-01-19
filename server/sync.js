@@ -12,12 +12,29 @@ class SyncHost {
     this.keyword = keyword;
     /** The internal data that is synchronized with the client. */
     this.data = startingData;
+    this.sockets = {};
 
     //Connect all future and current sockets
     if (!io) return console.warn('SyncHost not given an IO server!')
-    io.fetchSockets().then(s => s.forEach(n => this.connect(n)));
-    io.on("connection", s => this.connect(s));
+    
+    this.connectSocket = s => this.connect(s)
+    io.fetchSockets().then(s => s.forEach(this.connectSocket));
+    io.on("connection", this.connectSocket);
     increment('sync connection binds');//performance debug
+
+    this.subscribeSocket = new Map()
+    this.unsubscribeSocket = new Map()
+  }
+  
+  close() {
+    this.io.off('connection', this.connectSocket);
+    
+    const {keyword, subscribeSocket, unsubscribeSocket} = this;
+    Object.values(this.sockets).forEach(s => {
+      s.off(`sync subscribe ${keyword}`, subscribeSocket.get(s));
+      s.off(`sync unsubscribe ${keyword}`, unsubscribeSocket.get(s));
+    })
+    this.sockets = {};
   }
 
   /**
@@ -28,8 +45,17 @@ class SyncHost {
   connect(socket) {
     increment('sync connections')
     const { keyword } = this;
-    socket.on(`sync subscribe ${keyword}`, ack => this.subscribe(socket, ack));
-    socket.on(`sync unsubscribe ${keyword}`, () => this.unsubscribe(socket));
+    
+    const subscribeSocket = ack => this.subscribe(socket, ack)
+    const unsubscribeSocket = () => this.unsubscribe(socket)
+    
+    this.subscribeSocket.set(socket, subscribeSocket)
+    this.unsubscribeSocket.set(socket, unsubscribeSocket)
+    
+    socket.on(`sync subscribe ${keyword}`, subscribeSocket);
+    socket.on(`sync unsubscribe ${keyword}`, unsubscribeSocket);
+    
+    this.sockets[socket.id] = socket;
   }
 
   /**
@@ -79,6 +105,13 @@ class SyncHost {
     delete data[key];
 
     io.to(keyword).emit(`sync delete ${keyword}`, key);
+  }
+  
+  /**Completely overrides the data with new data.*/
+  set(data) {
+    const {io, keyword} = this;
+    this.data = data;
+    io.to(keyword).emit(`sync set ${keyword}`);
   }
 
   /**
