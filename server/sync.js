@@ -1,4 +1,5 @@
 const increment = require("./debug");
+const clone = require('lodash.clonedeep')
 
 class SyncHost {
   constructor(io, keyword, startingData = {}) {
@@ -11,7 +12,7 @@ class SyncHost {
     */
     this.keyword = keyword;
     /** The internal data that is synchronized with the client. */
-    this.data = startingData;
+    this.data = clone(startingData);
     this.sockets = {};
 
     //Connect all future and current sockets
@@ -66,7 +67,7 @@ class SyncHost {
    */
   create(key, value) {
     const { data, io, keyword } = this;
-    data[key] = value;
+    data[key] = clone(value);
     
     io.to(keyword).emit(`sync create ${keyword}`, key, value);
   }
@@ -110,8 +111,8 @@ class SyncHost {
   /**Completely overrides the data with new data.*/
   set(data) {
     const {io, keyword} = this;
-    this.data = data;
-    io.to(keyword).emit(`sync set ${keyword}`);
+    this.data = clone(data);
+    io.to(keyword).emit(`sync set ${keyword}`, data);
   }
 
   /**

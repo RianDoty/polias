@@ -16,7 +16,17 @@ const UserList = () => {
   const code = useContext(RoomContext);
   const user = useContext(UserContext);
   const socket = useSocket();
-  const [users, updateUsers] = useSync(`room users ${code}`, {[user.id]: userTemplate(user, socket)});
+  const [users, updateUsers] = useSync(`room users ${code}`, {[user.id]: userTemplate(user, socket)}, true);
+
+  // const template = userTemplate(user, socket)
+  // useEffect(() => {
+  //   updateUsers(u => {
+  //     if (!user.id) return u;
+  //     console.log('updating user template client-side!')
+  //     u[user.id] = template
+  //     return u
+  //   })
+  // }, Object.values(template))
 
   const entries = Object.values(users).map(u => (<UserEntry user={u} me={u.socketId === socket.id}/>))
   

@@ -111,20 +111,69 @@ describe("Socket tests", () => {
   
   describe('SyncHost tests', () => {
     let mySyncHost
-    
-    beforeAll(() => {
-      mySyncHost = new SyncHost(io, 'test', {foo: 'foostring'})
-    })
-    
-    afterAll(() => {
+    const defaultHostValue ={foo: 'foostring', foo2:{foo3:'foostring2'}}
 
+    beforeEach(() => {
+      mySyncHost = new SyncHost(io, 'test', defaultHostValue)
+    })
+
+    afterEach(() => {
+      mySyncHost.close()
+      mySyncHost = null
     })
     
-    it('should transmit basic data on subscribe', async()=>{
-      const result = renderHook(useSync, 'test')
-      await waitFor(()=>{
-        expect(result.current[0]).toEqual({foo: 'foostring'})
-      }, 2000)
+    it('should transmit basic data on subscribe', (done)=>{
+      clientSocket.emit('sync subscribe test', data => {
+        expect(data).toEqual(defaultHostValue)
+        done()
+      })
+    })
+
+    it('should transfer updates for set, create, update, & delete while mutating internal data', async () => {
+      const setData = {foo: 'foostring', foo2:{foo3:'foostring2'}}; 
+      const createArgs = ['foo4', {foo5: 'foostring3'}]
+      const updateArgs = ['foo2', 'foo3', 'foostring4']
+      const deleteArg = 'foo'
+
+      await new Promise(resolve => clientSocket.emit('sync subscribe test', data => resolve()))
+
+      const setPromise = new Promise(resolve => clientSocket.once('sync set test', data => {
+        expect(data).toEqual(setData)
+        resolve()
+      }))
+
+      const createPromise = new Promise(resolve => clientSocket.once('sync create test', (key, value) => {
+        expect(key).toBe(createArgs[0])
+        expect(value).toEqual(createArgs[1])
+        resolve()
+      }))
+
+      const updatePromise = new Promise(resolve => clientSocket.once('sync update test', (key, prop, value) => {
+        expect(key).toBe(updateArgs[0])
+        expect(prop).toBe(updateArgs[1])
+        expect(value).toBe(updateArgs[2])
+        resolve()
+      }));
+
+      const deletePromise = new Promise(resolve => clientSocket.once('sync delete test', key => {
+        expect(key).toBe(deleteArg)
+        resolve()
+      }))
+
+      mySyncHost.set(setData)
+      expect(mySyncHost.data).toEqual({foo: 'foostring', foo2:{foo3:'foostring2'}})
+      await setPromise
+      mySyncHost.create(...createArgs)
+      expect(mySyncHost.data).toEqual({foo: 'foostring', foo2:{foo3:'foostring2'}, foo4:{foo5:'foostring3'}})
+      await createPromise
+      mySyncHost.update(...updateArgs)
+      expect(mySyncHost.data).toEqual({foo: 'foostring', foo2:{foo3:'foostring4'}, foo4:{foo5:'foostring3'}})
+      await updatePromise
+      mySyncHost.delete(deleteArg)
+      expect(mySyncHost.data).toEqual({foo2:{foo3:'foostring4'}, foo4:{foo5:'foostring3'}})
+      await deletePromise
     })
   })
+
+
 });
