@@ -13,7 +13,7 @@ require('./sessions').initSessions(io)
 //Handlers
 const initUser = require('./user-manager')
 const handleDisconnect = require('./on-user-disconnect') 
-const RoomManager = require('room-manager')(io)
+const RoomManager = require('./room-manager')(io)
 
 io.on('connection', (socket) => {
   initUser(io, socket)

@@ -1,17 +1,9 @@
-const increment = require("./debug");
 const clone = require('lodash.clonedeep')
 
 class SyncHost {
   constructor(io, keyword, startingData = {}) {
-    /** The socketIO server. */
     this.io = io;
-    /** 
-     * The string associated with this SyncHost that the client should already know how to find.
-     * 
-     * @type {string}
-    */
     this.keyword = keyword;
-    /** The internal data that is synchronized with the client. */
     this.data = clone(startingData);
     this.sockets = {};
 
@@ -21,7 +13,6 @@ class SyncHost {
     this.connectSocket = s => this.connect(s)
     io.fetchSockets().then(s => s.forEach(this.connectSocket));
     io.on("connection", this.connectSocket);
-    increment('sync connection binds');//performance debug
 
     this.subscribeSocket = new Map()
     this.unsubscribeSocket = new Map()
@@ -44,7 +35,6 @@ class SyncHost {
    * @param {object} socket The socket to connect. 
    */
   connect(socket) {
-    increment('sync connections')
     const { keyword } = this;
     
     const subscribeSocket = ack => this.subscribe(socket, ack)
