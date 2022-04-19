@@ -4,7 +4,7 @@ const { randomCode, unregisterCode } = require("./random-code");
 
 const noop = () => {};
 
-class RoomsManager {
+class RoomManager {
   constructor(io) {
     this.io = io;
     this.rooms = new Map();
@@ -33,18 +33,20 @@ class RoomsManager {
     roomListSync.create(code, newRoom.template());
   }
 
-  destroy(room) {
-    this.rooms.delete(room.code);
-    this.syncHost.delete(room.code);
+  destroyRoom(room) {
+    const { code } = room;
+    this.rooms.delete(code);
+    this.syncHost.delete(code);
+    unregisterCode(code)
   }
 
   roomExists(code) {
     return this.rooms.has(code);
   }
 
-  getRoom(code) {
+  findRoom(code) {
     return this.rooms.get(code);
   }
 }
 
-module.exports = (io) => new RoomsManager(io);
+module.exports = (io) => new RoomManager(io);
