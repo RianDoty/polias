@@ -73,6 +73,7 @@ class CardManager {
       // Otherwise, just assign using the given id.
       cardId = id
     }
+    console.log(this.unassignedCards[cardId])
     
     // Cache the user for if the pack is changed
     if (!this.users[user.id]) this.users[user.id] = user;

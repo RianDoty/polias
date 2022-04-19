@@ -1,5 +1,5 @@
 import useVolatileState from './volatile-state';
-import { useSocketCallbacks } from './socket'
+import useSocketCallbacks from './socket-callbacks'
 
 const useUser = () => {
   const [state, updateState] = useVolatileState({

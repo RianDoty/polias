@@ -5,6 +5,7 @@ const maxNicknameLength = 20;
 class User extends EventEmitter {
   constructor(socket, { name = "Unknown" } = {}) {
     super();
+    //Reflect changes to the client socket
     this.on("changed", (diff) => this.socket.emit("changed", diff));
 
     this.socket = socket;
@@ -36,10 +37,13 @@ class User extends EventEmitter {
     }
     this.emit("changed", { ready });
   }
+  
+  setHost(isHost = false) {
+    this.emit('changed', {host: isHost});
+  }
 
   assignCard(cardId) {
     this.cardId = cardId;
-    this.socket.emit("assign-card", cardId);
     this.emit("changed", { cardId });
   }
 

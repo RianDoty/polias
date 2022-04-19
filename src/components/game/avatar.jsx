@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import React, { useContext } from 'react'
 import CardPackContext from '../../contexts/cardPack';
 import avatars from './avatars'
 const {default: defaultAvatar, cardPacks} = avatars;
@@ -6,7 +6,6 @@ const {default: defaultAvatar, cardPacks} = avatars;
 const Avatar = ({user}) => {
   const {cardId} = user;
   const pack = useContext(CardPackContext)
-  console.log(`pack seen as ${pack}`);
 
   let image = defaultAvatar;
   if (cardId !== -1 && pack !== undefined) {

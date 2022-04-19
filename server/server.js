@@ -3,17 +3,25 @@ const path = require("path");
 const app = express();
 const http = require("http").Server(app);
 const { Server } = require("socket.io");
-const io = new Server(http, {
-  path: "/api"
-});
+const io = new Server(http);
 
-//I'm going to be using a LOT of on('connect') listeners.
-//shoot me if this is a performance dump
-io.setMaxListeners(200);
+// Socket.io
 
-require('./networking')(io) //Set up networking for the game
+//Session
+require('./sessions').initSessions(io)
 
-// PWAs want HTTPS!
+//Handlers
+const initUser = require('./user-manager')
+const handleDisconnect = require('./on-user-disconnect') 
+const RoomManager = require('room-manager')(io)
+
+io.on('connection', (socket) => {
+  initUser(io, socket)
+  handleDisconnect(io, socket)
+  RoomManager.registerHandlers(socket)
+})
+
+//  Boring server stuff
 // Swap over non-https connections to https
 function checkHttps(request, response, next) {
   // Check the protocol — if http, redirect to https.
@@ -25,8 +33,6 @@ function checkHttps(request, response, next) {
 }
 
 app.all("*", checkHttps);
-
-
 
 // Express port-switching logic
 // no touch
@@ -40,10 +46,7 @@ if (process.env.NODE_ENV === "production") {
   });
 } else {
   port = 3001;
-  console.log("⚠️ Not seeing your changes as you develop?");
-  console.log(
-    "⚠️ Do you need to set 'start': 'npm run development' in package.json?"
-  );
+  console.log("⚠️ Running development server")
 }
 
 // Start the listener!

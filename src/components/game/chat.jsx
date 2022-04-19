@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import useSync from "../../hooks/sync";
-import { useSocket } from '../../hooks/socket';
+import socket from '../../socket'
 import Avatar from './avatar'
 
 import RoomContext from '../../contexts/room';
@@ -20,10 +20,7 @@ const Chat = ({chatRoomName='lobby'}) => {
   const user = useContext(UserContext)
   const keyword = `room chat ${chatRoomName} ${code}`;
   const [messages, setMessages] = useSync(`room chat ${chatRoomName} ${code}`)
-  const socket = useSocket();
-  const [oldScroll, setOldScroll] = useState(0);
-  const messageListRef = useRef();
-  const messageList = messageListRef.current;
+  const [debug, setDebug] = useState('')
   
   const currentKey = () => Object.keys(messages).reduce(((big, cur) => cur > big ? cur : big), 0)
   const submitMessage = (content) => {
@@ -38,15 +35,9 @@ const Chat = ({chatRoomName='lobby'}) => {
     socket.emit(`send-message ${keyword}`, id, content)
   }
   
-  useEffect(()=>{
-    if (!messageList) return;
-    const currentLength = messageList.scrollHeight;
-    
-    messageList.scrollTop = currentLength;
-  },[Object.values(messages).length])
-  
   return (
     <div className="chat">
+      {debug}
       <MessageList messages={messages}/>
       <MessageEntry onSubmit={submitMessage}/>
     </div>
@@ -55,23 +46,29 @@ const Chat = ({chatRoomName='lobby'}) => {
 
 const MessageList = ({messages={}}) => {
   const messageComponents = Object.values(messages).map(m => {return (<Message data={m}/>)})
+  const ref = useRef();
+  const [debug, setDebug] = useState()
+  
+  useEffect(()=>{
+    const messageList = ref.current;
+    const { scrollTop, scrollHeight, offsetHeight } = messageList;
+    
+    const isScrolledToBottom = ((scrollHeight - offsetHeight) - scrollTop) < 100
+    
+    if (isScrolledToBottom) {messageList.scrollTop = scrollHeight};
+  },[Object.values(messages).length])
   
   return (
-    <div className='message-list'>
+    <div className='message-list' ref={ref}>
       {messageComponents}
+      {debug}
     </div>
   )
 }
 
 const Message = ({data: {author, content}}) => {
-  const ref = useRef()
-  
-  useEffect(()=>{
-    ref.current.scrollIntoView();
-  },[ref.current])
-  
   return (
-    <li className='message' ref={ref}>
+    <li className='message'>
       <Avatar user={author}/>
       <div className='message-container'>
         <div className='message-author'>{author.name}</div>

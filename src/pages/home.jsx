@@ -1,18 +1,21 @@
 import React from "react";
 import { useState, useContext } from "react";
 import { useLocation, Link } from "wouter";
-import { useSocket } from "../hooks/socket";
 import useSync from "../hooks/sync";
 
 import UserContext from "../contexts/user";
 
 import "../styles/home.css";
 
-//Components//
+import socket from '../socket'
+
+//Components
 const Section = ({ children }) => (
   <div className="dash-section">{children}</div>
 );
+
 const BottomLogo = () => <h3 className="bottom-logo">Polias</h3>;
+
 const Cell = ({ children, wClass, header }) => (
   <div className={`cell ${wClass}`}>
     <div className="dash-box">
@@ -21,6 +24,7 @@ const Cell = ({ children, wClass, header }) => (
     </div>
   </div>
 );
+
 const CellHeader = ({ children }) => (
   <div className="cell-header">{children}</div>
 );
@@ -31,7 +35,6 @@ const Error = ({ children }) => <span className="error">{children}</span>;
 const NameEntry = ({ user }) => {
   const [inpVal, updateInpVal] = useState("");
   const [err, setErr] = useState("");
-  const socket = useSocket()
 
   function onSubmit(e) {
     e.preventDefault();
@@ -40,7 +43,10 @@ const NameEntry = ({ user }) => {
     if (inpVal) {
       //The input is valid, set the user's name
       user.update('name', inpVal);
-      socket.emit('set nickname', inpVal);
+      
+      //Connect to the server
+      socket.auth = { username: inpVal }
+      socket.connect()
     }
     else throw Error("Invalid name!");
   }
@@ -74,7 +80,6 @@ const RoomCreator = () => {
   const [err, setErr] = useState();
   const [name, setName] = useState("");
   const [, setLocation] = useLocation();
-  const socket = useSocket();
   const user = useContext(UserContext);
 
   const onSubmit = e => {
@@ -166,13 +171,16 @@ export default function Home() {
   return (
     <div className="narrow">
       <Section>
-        <h1>Currently developing (and very broken), sorry! -Rian&nbsp;D.</h1>
+        <h1>Welcome to Polias!</h1>
         <p>
-          Polias is a deception game where <em>everyone</em> gets to have fun.
+          Polias is a deception game (very early in development) where <em>everyone</em> gets to have fun.
         </p>
         <p>
           Scheme, steal, and work to make bank the fastest to buy the legendary
           idol and ascend to greatness!
+        </p>
+        <p>
+          If you just want to use the chat and not the more experimental parts of the site, visit <a className='default' href='https://www.erhschat.glitch.me'>ERHSchat.</a>
         </p>
       </Section>
       <h2>Get Started</h2>

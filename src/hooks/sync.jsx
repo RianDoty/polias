@@ -1,13 +1,10 @@
 import { useEffect } from "react";
 import useVolatileState from "./volatile-state";
-import { useSocket, useSocketCallbacks } from "./socket";
+import useSocketCallbacks from "./socket-callbacks";
+import socket from '../socket';
 
-function tablesEqual(t1, t2) {
 
-}
-
-const useSync = (keyword, def={}, log=false) => {
-  const socket = useSocket();
+const useSync = (keyword, def=({}), log=false) => {
   const [store, setStore] = useVolatileState(def);
 
   useEffect(() => {
@@ -37,15 +34,18 @@ const useSync = (keyword, def={}, log=false) => {
       console.log('sync recieved:',key,prop,value)
       setStore(store => {
         if (value === undefined) {
+          //depth 1 update
           value = prop;
           
-          if (store[key] === value) {console.log('oh shit 3'); return false;}
+          if (store[key] === value) return store;
           if (log) console.log(`${keyword} to update k: ${key.substring(0,7)} v: ${value}`)
           store[key] = value;
           return store
         }
-        if (!store[key]) {console.log('oh shit 2'); return false};
-        if (store[key][prop] === value) {console.log('oh shit'); return false}
+
+        //depth 2 update
+        if (!store[key]) return store;
+        if (store[key][prop] === value) return store;
         if (log) console.log(`${keyword} to update k: ${key.substring(0,7)} p: ${prop} v: ${value}`)
         store[key][prop] = value
         

@@ -1,13 +1,12 @@
 //Lets the user set their name when joining via link w/ code
-import { useState, useContext } from "react";
-import { useSocket } from "../../hooks/socket";
+import React, { useState, useContext } from "react";
+import socket from '../../socket'
 
 import UserContext from "../../contexts/user";
 
 const NameEntryPrompt = () => {
   const [content, setContent] = useState("");
   const user = useContext(UserContext);
-  const socket = useSocket();
 
   function onSubmit(e) {
     e.preventDefault();
@@ -37,7 +36,7 @@ const NameEntryScreen = () => {
   const active = !user.name;
 
   return (
-    <div class="name-entry-screen" active={+active}>
+    <div className="name-entry-screen" active={+active}>
       <h1>Set Your Name:</h1>
       <NameEntryPrompt/>
     </div>

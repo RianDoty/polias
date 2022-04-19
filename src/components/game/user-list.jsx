@@ -1,9 +1,10 @@
-import { useEffect,  useContext } from 'react';
+import React, { useEffect,  useContext } from 'react';
 import useSync from '../../hooks/sync';
 import UserContext from '../../contexts/user';
 import RoomContext from '../../contexts/room';
-import { useSocket } from '../../hooks/socket';
 import Avatar from './avatar'
+
+import socket from '../../socket'
 
 const userTemplate = (user, socket) => ({
   name: user.name,
@@ -15,8 +16,16 @@ const userTemplate = (user, socket) => ({
 const UserList = () => {
   const code = useContext(RoomContext);
   const user = useContext(UserContext);
-  const socket = useSocket();
-  const [users, updateUsers] = useSync(`room users ${code}`, {[user.id]: userTemplate(user, socket)});
+  const [users, updateUsers] = useSync(`room users ${code}`, {[user.id]: userTemplate(user, socket)}, true);
+
+  // const template = userTemplate(user, socket)
+  // useEffect(() => {
+  //   updateUsers(u => {
+  //     if (!user.id) return u;
+  //     u[user.id] = template
+  //     return u
+  //   })
+  // }, Object.values(template))
 
   const entries = Object.values(users).map(u => (<UserEntry user={u} me={u.socketId === socket.id}/>))
   

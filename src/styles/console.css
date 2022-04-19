@@ -1,0 +1,43 @@
+/*--console-length = 500px*/
+
+.console {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--console-length);
+  
+  background-color: var(--shade2);
+  box-shadow: -2px 0px 4px 2px var(--shadow);
+  
+  display: flex;
+  flex-direction: column;
+  
+  overflow: auto;
+}
+
+.map {
+  flex-grow: 1;
+  margin: 10px;
+  border-radius: 20px;
+  width: calc(100% - 20px);
+  
+  
+  background-color: var(--shade3);
+}
+
+.map-component {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  outline: 4px solid var(--highlight);
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+}
+
+.controls {
+  flex-shrink: 0;
+  width: 100%;
+  height: 200px;
+}
