@@ -3,7 +3,7 @@ body {
   color: white;
 }
 
-a {
+a:not(.default) {
   color: inherit;
   border: none;
   text-decoration: none;

@@ -1,13 +1,10 @@
 import { useEffect } from "react";
 import useVolatileState from "./volatile-state";
-import { useSocket, useSocketCallbacks } from "./socket";
+import useSocketCallbacks from "./socket-callbacks";
+import socket from '../socket';
 
-function tablesEqual(t1, t2) {
 
-}
-
-const useSync = (keyword, def={}, log=false) => {
-  const socket = useSocket();
+const useSync = (keyword, def=({}), log=false) => {
   const [store, setStore] = useVolatileState(def);
 
   useEffect(() => {

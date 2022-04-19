@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useSocket } from './socket';
 import useSync from './sync';
 
+import socket from '../socket'
+
 export default function useRoom(code) {
-  const socket = useSocket();
   const [roomState] = useSync(`room state ${code}`)
   
   useEffect(()=>{

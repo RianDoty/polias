@@ -1,12 +1,18 @@
+:root {
+  --left-bar-length: 225px;
+  --console-length: 500px;
+}
+
 /*** Left Bar ***/ 
 .left-side-bar {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
-  width: 225px;
+  width: var(--left-bar-length);
   background-color: var(--shade2);
   overflow: hidden;
+  z-index: 1;
 
   display: flex;
   flex-direction: column;
@@ -57,13 +63,13 @@
 }
 
 .host-user {
-  background: #221;
+  background: #222211;
   border-radius: 3px;
 }
 
 .user-entry:not(:first-child) {
   padding-top: 10px;
-  border-top: 1px solid #444;
+  border-top: 1px solid #444444;
 }
 
 .user-info {
@@ -71,8 +77,6 @@
   display: inline-block;
 }
 
-.rank {
-}
 
 .avatar {
   height: 40px;
@@ -86,8 +90,8 @@
   position: absolute;
   top:0;
   bottom:0;
-  left: 225px;
-  right:0;
+  left: var(--left-bar-length);
+  right: var(--console-length);
   
   display: flex;
   flex-direction: column;
@@ -99,6 +103,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: auto;
 }
 
 .message-entry {
@@ -109,6 +114,7 @@
   display: flex;
   height: 3rem;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .message-entry > input {
@@ -130,7 +136,8 @@
   margin: 0.25rem;
   border-radius: 3px;
   outline: none;
-  color: #fff;
+  color: #ffffff;
+  cursor: pointer;
 }
 
 .message-list {
@@ -189,6 +196,8 @@
   transition: opacity 1s;
   opacity: 0;
   pointer-events: none;
+  
+  z-index: 9999;
 }
 
 .name-entry-screen[active='1'] {

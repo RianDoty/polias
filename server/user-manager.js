@@ -1,14 +1,8 @@
-//Manages the creation, updating, etc. of user profiles
-//Users are stored in the sockets
-//also here ig
+//Manages the creation, updating, etc. of sessions and users
+const SessionStore = require('./session-store')
 const User = require('./user');
+const uuid = require('uuid')
 
-module.exports = (io) => {
-  io.on('connection', (socket) => {
-    const user = new User(socket)
-    socket.user = user;
-    
-    socket.on('set nickname', nickname => user.setNickname(nickname));
-    socket.on('toggle-ready', ready => user.setReady(ready));
-  })
+module.exports = (io, socket) => {
+  
 }

@@ -26,6 +26,10 @@
   transition: max-width 0.5s, background-color 0.5s;
 }
 
+.header-logo {
+  cursor: pointer;
+}
+
 .header-logo * {
   margin: auto 0;
 }

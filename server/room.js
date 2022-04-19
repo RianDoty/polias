@@ -5,6 +5,8 @@ const CardManager = require('./card-manager')
 const Game = require('./gameAssets/game')
 const Config = require('./config')
 
+const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms))
+
 //Class to manage data storage for a room, which hosts games
 class Room {
   constructor(io, code, host, manager, roomListHost, name = 'unnamed') {
@@ -46,7 +48,7 @@ class Room {
     });
   }
   
-  /**Don't call this one, this is for event listeners*/
+  /**To pass as a callback to listen to when a user emits 'changed'*/
   onChange(diff) {
     Object.entries(diff).forEach(([p,v]) => {
       this.room.usersSync.update(this.id,p,v)
@@ -158,6 +160,7 @@ class Room {
     this.host = socket;
     const { user } = socket;
     this.usersSync.update(user.id, 'host', true);
+    user.setHost(true);
   }
   
   // Chat
@@ -180,8 +183,15 @@ class Room {
   }
   
   // Game
-  startGame() {
-   this.ioRoom.emit('game-about-to-start', this.gameConfig.get('aboutToStartTime'));
+  async startGame() {
+    const toStartTime = this.gameConfig.get('aboutToStartTime')
+    this.ioRoom.emit('game-about-to-start', toStartTime);
+    await sleep(toStartTime*1000);
+    
+    //Create and start a game
+    const game = new Game(this, this.gameConfig)
+    this.game = game;
+    game.start();
   }
 
   destroy() {

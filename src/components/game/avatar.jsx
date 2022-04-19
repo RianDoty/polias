@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import React, { useContext } from 'react'
 import CardPackContext from '../../contexts/cardPack';
 import avatars from './avatars'
 const {default: defaultAvatar, cardPacks} = avatars;
