@@ -9,22 +9,34 @@ const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms))
 
 //Class to manage data storage for a room, which hosts games
 class Room {
-  constructor(io, code, host, manager, roomListHost, name = 'unnamed') {
-    this.io = io;
-    this.ioRoom = io.to(this.code);
-    this.code = code;
-    this.name = name;
-    this.manager = manager;
-    this.hostName = host.name;
-    this.users = {}
+  constructor(roomManager, {code, name, host, password}) {
+    const { io, syncHost: roomListHost } = roomManager;
+    
+    const ioNamespace = io.of(`/${this.code}`);
+    this.users = new Map();
+    
+    //Namespace
+    ioNamespace.use((socket, next) => {
+      //Verify password (if the room uses one)
+      const { password } = socket.auth;
+      
+      if (this.password) {
+        if (this.password === password) {
+          return next()
+        } else {
+          return next(new Error('Invalid Password'))
+        }
+      }
+      
+      next()
+    })
     
     // Synchronization
     //Users: {name, cardId}
-    this.usersSync = new SyncHost(io, `room users ${code}`, {});
-    this.stateSync = new SyncHost(io, `room state ${code}`, {
+    this.usersSync = new SyncHost(ioNamespace, `room users ${code}`, {});
+    this.stateSync = new SyncHost(ioNamespace, `room state ${code}`, {
       state: 'lobby',
-      cardPack: 'fruits',
-      foo: 'foo'
+      cardPack: 'fruits'
     });
     this.roomListSync = roomListHost
     
@@ -35,8 +47,6 @@ class Room {
     //Cards
     this.cardManager = new CardManager(this)
     
-    this.host = host
-    
     // Game
     this.gameConfig = new Config({
       aboutToStartTime: {
@@ -46,25 +56,37 @@ class Room {
         max: 20
       }
     });
-  }
-  
-  /**To pass as a callback to listen to when a user emits 'changed'*/
-  onChange(diff) {
-    Object.entries(diff).forEach(([p,v]) => {
-      this.room.usersSync.update(this.id,p,v)
+    
+    this.onConnection = this.onConnection.bind(this);
+    ioNamespace.on('connection', this.onConnected)
+    
+    
+    Object.assign(this, {
+      io,
+      ioNamespace,
+      code,
+      name,
+      roomManager,
+      host,
+      password,
+      roomListSync: roomListHost
     })
   }
 
+  onConnection(socket) {
+    const user = this.users.get(socket.userID) || User.create(socket);
+  }
+  
+  //TODO: replace join and leave with namespaces
   join(socket) {
     const { user } = socket;
-    console.log(`user ${user.id.substring(0,5)}.. joined`)
     
     if (!user) return console.log('socket does not have a user!');
     
     user.room = this;
 
     //Update users
-    this.users[user.id] = user;
+    this.users.set(user.id, user)
     this.usersSync.create(user.id, user.template())
     this.updatePCount()
     
@@ -127,15 +149,14 @@ class Room {
   }
   
   get pCount() {
-    const count = Object.keys(this.users).length;
-    return  count;
+    return this.users.size
   }
   
   template() {
     return {
       name: this.name,
       code: this.code,
-      hostName: this.hostName,
+      hostName: this.host.username,
       pCount: this.pCount,
       pMax: '∞' //TODO: make this actually matter
     }

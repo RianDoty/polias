@@ -18,7 +18,7 @@ const RoomManager = require('./room-manager')(io)
 io.on('connection', (socket) => {
   initUser(io, socket)
   handleDisconnect(io, socket)
-  RoomManager.registerHandlers(socket)
+  RoomManager.listen(socket)
 })
 
 //  Boring server stuff

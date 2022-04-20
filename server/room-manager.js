@@ -8,29 +8,29 @@ class RoomManager {
   constructor(io) {
     this.io = io;
     this.rooms = new Map();
+    
     this.syncHost = new SyncHost(io, "rooms");
   }
 
-  registerHandlers(socket) {
+  listen(socket) {
     const onCreateRoom = (name, ack = noop) => {
-      const code = randomCode();
       const host = socket.user;
-
-      this.createRoom(code, host, name);
-
-      //Send the host to the room
-      ack(code);
+      const code = randomCode()
+      
+      this.createRoom({code, name, host});
+      ack(code); //Tell the host the code of the new room so it can go there
     };
 
     socket.on("create-room", onCreateRoom);
   }
 
-  createRoom(code = randomCode(), host, roomData) {
-    const { roomListSync, io } = this;
-
-    const newRoom = new Room(io, code, host, this, roomListSync, roomData);
-    this.rooms[code] = newRoom;
-    roomListSync.create(code, newRoom.template());
+  createRoom(roomData) {
+    const { code } = roomData;
+    const { syncHost } = this;
+    
+    const newRoom = new Room(this, roomData);
+    this.rooms.set(code, newRoom)
+    syncHost.create(code, newRoom.template());
   }
 
   destroyRoom(room) {

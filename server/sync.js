@@ -29,11 +29,6 @@ class SyncHost {
     this.sockets = {};
   }
 
-  /**
-   * Connects a socket to the sync host.
-   * 
-   * @param {object} socket The socket to connect. 
-   */
   connect(socket) {
     const { keyword } = this;
     
@@ -48,13 +43,7 @@ class SyncHost {
     
     this.sockets[socket.id] = socket;
   }
-
-  /**
-   * Signals to create an entry in the sync.
-   * 
-   * @param {string} key The key to create the entry in.
-   * @param {any} value The entry to create.
-   */
+  
   create(key, value) {
     const { data, io, keyword } = this;
     data[key] = clone(value);
@@ -62,34 +51,29 @@ class SyncHost {
     io.to(keyword).emit(`sync create ${keyword}`, key, value);
   }
 
-  /**
-   * Signals to update a prop of one entry from the sync.
-   * 
-   * @param {string} key The key of the entry.
-   * @param {string} prop The prop of the edited value.
-   * @param {any} value The new value.
-   * @returns 
-   */
-  update(key, prop, value) {
+  update(key, ...path) {
     const { data, io, keyword } = this;
 
-    if (value === undefined) {
-      if (typeof data[key] === 'object' && typeof value !== 'object') throw Error('Object store overwritten!')
-      value = prop;
-      data[key] = value;
-    } else {
-      if (!data[key]) return console.warn(`data assignment to undefined key : ${key} ${prop} ${value}`);
-      data[key][prop] = value;
+    
+    try {
+      const dPath = [...path]
+      const value = dPath.pop();
+      const prop = dPath.pop();
+      
+      let current = data;
+      for (const dir of dPath) {
+        current = current[dir];
+        
+        io.to(keyword).emit(`sync update ${keyword}`, key, ...path);
+      }
+      
+      current[prop] = value;
+      
+    } catch {
+      console.error(`Error in update sync with args ${path}`)
     }
-
-    io.to(keyword).emit(`sync update ${keyword}`, key, prop, value);
   }
 
-  /**
-   * Signals to remove an entry from the sync.
-   * 
-   * @param {String} key The key of the entry to remove. 
-   */
   delete(key) {
     const { data, io, keyword } = this;
 
@@ -98,19 +82,12 @@ class SyncHost {
     io.to(keyword).emit(`sync delete ${keyword}`, key);
   }
   
-  /**Completely overrides the data with new data.*/
   set(data) {
     const {io, keyword} = this;
     this.data = clone(data);
     io.to(keyword).emit(`sync set ${keyword}`, data);
   }
 
-  /**
-   * Subscribes a socket to the SyncHost, and serves it the current data.
-   * 
-   * @param {object} socket The socket to subscribe.
-   * @param {function} ack Function to fire back to.
-   */
   subscribe(socket, ack) {
     //Return the current value to the client as the initial value
     if (ack) ack(this.data);
@@ -118,11 +95,6 @@ class SyncHost {
     socket.join(this.keyword);
   }
 
-  /**
-   * Unsubscribes a socket from the SyncHost, and stops sending it updates.
-   * 
-   * @param {object} socket The socket to unsubscribe. 
-   */
   unsubscribe(socket) {
     //Stop sending the client changes
     socket.leave(this.keyword);
