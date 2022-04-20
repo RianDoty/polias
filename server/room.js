@@ -74,33 +74,42 @@ class Room {
   }
 
   onConnection(socket) {
-    const user = this.users.get(socket.userID) || User.create(socket);
+    const user = this.users.get(socket.userID) || this.createUser(socket);
+
+    socket.user = user;
+
+    socket.on('disconnect', ()=>this.onDisconnect(socket))
   }
-  
-  //TODO: replace join and leave with namespaces
-  join(socket) {
-    const { user } = socket;
-    
-    if (!user) return console.log('socket does not have a user!');
-    
+
+  async onDisconnect(socket) {
+    const noSocketsControlling = (await this.ioNamespace.in(socket.userID).allSockets()).size === 0;
+
+    if (noSocketsControlling) {
+      
+    }
+  }
+
+  createUser(socket) {
+    //Create a new user.
+    const user = User.create(socket)
     user.room = this;
 
-    //Update users
-    this.users.set(user.id, user)
     this.usersSync.create(user.id, user.template())
+    this.users.set(user.id, user)
     this.updatePCount()
-    
-    this.bind(user);
-    
+    this.bind(user)
+
     if (this.noPlayersTimeout) {
       //Someone's in the room now, so the room shouldn't be destroyed
       clearTimeout(this.noPlayersTimeout)
       this.noPlayersTimeout = null;
     };
-    
-    //Disconnected from site = left room
-    socket.on('disconnect', ()=>this.leave(socket))
-    
+
+    socket.join(user.id)
+  }
+  
+  //TODO: replace join and leave with namespaces
+  join(socket) {
     //If the user is the only user in the room, give it the Host role
     if (this.pCount == 1) {
       this.assignHost(socket);
