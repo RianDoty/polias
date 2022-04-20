@@ -1,5 +1,5 @@
 //Generates a random code that cannot have a duplicate
-const usedCodes = {};
+const usedCodes = new Set();
 
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""); //Array of all capital letters
 function randomCode(length = 4) {
@@ -7,24 +7,24 @@ function randomCode(length = 4) {
   let attempts = 0;
   let data;
   do {
+    //Generate a random code
     data = "";
     for (let i = 0; i < length; i++) {
-      const maxAttempts = 100;
-      let randomIndex = Math.floor(Math.random() * letters.length); //Pick a random letter from the set
+      let randomIndex = Math.floor(Math.random() * letters.length); //Pick a random letter
 
       data += letters[randomIndex];
     }
-  } while (usedCodes[data] && attempts < maxAttempts);
+  } while (usedCodes.has(data) && attempts < maxAttempts);
 
   //Register a code as used
-  usedCodes[data] = true;
+  usedCodes.add(data);
 
   return data;
 }
 
 function unregisterCode(code = "") {
   //Make a code usable now that it doesn't have a purpose anymore
-  delete usedCodes[code];
+  usedCodes.delete(code)
 }
 
 module.exports = { randomCode, unregisterCode };
