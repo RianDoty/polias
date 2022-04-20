@@ -7,7 +7,7 @@ import UserContext from "../contexts/user";
 
 import "../styles/home.css";
 
-import socket from '../socket'
+import socket from "../socket";
 
 //Components
 const Section = ({ children }) => (
@@ -35,20 +35,24 @@ const Error = ({ children }) => <span className="error">{children}</span>;
 const NameEntry = ({ user }) => {
   const [inpVal, updateInpVal] = useState("");
   const [err, setErr] = useState("");
-
+  
   function onSubmit(e) {
     e.preventDefault();
 
-    setErr("");
-    if (inpVal) {
-      //The input is valid, set the user's name
-      user.update('name', inpVal);
-      
-      //Connect to the server
-      socket.auth = { username: inpVal }
-      socket.connect()
+    try {
+      if (inpVal) {
+        //The input is valid, set the user's name
+        user.update("name", inpVal);
+
+        //Connect to the server
+        socket.auth = { username: inpVal };
+        socket.connect();
+      } else throw Error("Invalid name!");
+
+      setErr("")
+    } catch (err) {
+      setErr(err.message);
     }
-    else throw Error("Invalid name!");
   }
 
   let errComponent;
@@ -62,10 +66,13 @@ const NameEntry = ({ user }) => {
         type="text"
         className="transparent-input"
         value={inpVal}
-        maxLength='20'
-        onChange={e => {
-          try{updateInpVal(e.target.value)}
-          catch(error){setErr(error)}
+        maxLength="20"
+        onChange={(e) => {
+          try {
+            updateInpVal(e.target.value);
+          } catch (error) {
+            setErr(error);
+          }
         }}
       />
       <input type="submit" className="button" value="✓" />
@@ -82,7 +89,7 @@ const RoomCreator = () => {
   const [, setLocation] = useLocation();
   const user = useContext(UserContext);
 
-  const onSubmit = e => {
+  const onSubmit = (e) => {
     e.preventDefault();
 
     if (!user.name || user.name === "Unnamed") {
@@ -92,9 +99,9 @@ const RoomCreator = () => {
 
     console.log("submitted");
     //Tell the server to create a room with the given name
-    socket.emit("create-room", name, code => {
+    socket.emit("create-room", name, (code) => {
       //After the room is created with a random code, join that room
-      setLocation(`/game/${code}`)
+      setLocation(`/game/${code}`);
     });
   };
 
@@ -110,7 +117,7 @@ const RoomCreator = () => {
         className="transparent-input"
         placeholder="Room Name"
         value={name}
-        onChange={e => setName(e.target.value)}
+        onChange={(e) => setName(e.target.value)}
       />
       <input type="submit" className="button" value="Create" />
       {errComponent}
@@ -173,14 +180,19 @@ export default function Home() {
       <Section>
         <h1>Welcome to Polias!</h1>
         <p>
-          Polias is a deception game (very early in development) where <em>everyone</em> gets to have fun.
+          Polias is a deception game (very early in development) where{" "}
+          <em>everyone</em> gets to have fun.
         </p>
         <p>
           Scheme, steal, and work to make bank the fastest to buy the legendary
           idol and ascend to greatness!
         </p>
         <p>
-          If you just want to use the chat and not the more experimental parts of the site, visit <a className='default' href='https://www.erhschat.glitch.me'>ERHSchat.</a>
+          If you just want to use the chat and not the more experimental parts
+          of the site, visit{" "}
+          <a className="default" href="https://www.erhschat.glitch.me">
+            ERHSchat.
+          </a>
         </p>
       </Section>
       <h2>Get Started</h2>
