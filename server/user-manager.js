@@ -3,6 +3,8 @@ const SessionStore = require('./session-store')
 const User = require('./user');
 const uuid = require('uuid')
 
-module.exports = (io, socket) => {
-  
+module.exports = class UserManager {
+    constructor(room) {
+        
+    }
 }

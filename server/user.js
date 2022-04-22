@@ -12,6 +12,7 @@ class User extends EventEmitter {
 
     Object.assign(this, {
       name,
+      userID,
       host: false,
       ready: false,
       inGame: false,
