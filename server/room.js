@@ -58,7 +58,7 @@ class Room {
     });
     
     this.onConnection = this.onConnection.bind(this);
-    ioNamespace.on('connection', this.onConnected)
+    ioNamespace.on('connection', this.onConnection)
     
     
     Object.assign(this, {
@@ -74,24 +74,30 @@ class Room {
   }
 
   onConnection(socket) {
-    const user = this.users.get(socket.userID) || this.createUser(socket);
-
+    socket.join(socket.userID);
+    
+    //Find/create user
+    const user = this.findUser(socket.userID)
+    if (!user) {
+      user = User.create(socket)
+      
+      this.onUserJoin(user)
+    }
+    
     socket.user = user;
-
-    socket.on('disconnect', ()=>this.onDisconnect(socket))
+    socket.on('disconnect', () => this.onDisconnect(socket))
   }
 
   async onDisconnect(socket) {
     const noSocketsControlling = (await this.ioNamespace.in(socket.userID).allSockets()).size === 0;
 
     if (noSocketsControlling) {
-      
+      //Every socket authorized to control the user has left
+      this.onUserLeave(this.getUser(socket))
     }
   }
-
-  createUser(socket) {
-    //Create a new user.
-    const user = User.create(socket)
+  
+  onUserJoin(user) {
     user.room = this;
 
     this.usersSync.create(user.id, user.template())
@@ -104,8 +110,10 @@ class Room {
       clearTimeout(this.noPlayersTimeout)
       this.noPlayersTimeout = null;
     };
-
-    socket.join(user.id)
+  }
+  
+  onUserLeave(user) {
+    
   }
   
   //TODO: replace join and leave with namespaces
@@ -150,25 +158,8 @@ class Room {
     }
   }
   
-  listen(socket) {
-    socket.on('start-game-request', () => {
-      if (!this.isHost(socket)) return;
-      this.startGame();
-    })
-  }
-  
   get pCount() {
     return this.users.size
-  }
-  
-  template() {
-    return {
-      name: this.name,
-      code: this.code,
-      hostName: this.host.username,
-      pCount: this.pCount,
-      pMax: '∞' //TODO: make this actually matter
-    }
   }
   
   updateList(prop, value) {
@@ -192,41 +183,14 @@ class Room {
     this.usersSync.update(user.id, 'host', true);
     user.setHost(true);
   }
-  
-  // Chat
-  generateChatRooms() {
-    this.chatManager.createRoom('lobby')
-  }
-  
-  // Cards
-  changeCardPack(requester, pack) {
-    //Only the host should be able to change the pack
-    if (!requester.hasAdmin()) return false;
-  }
-
-  bind(user) {
-    user.on('changed', this.onChange)
-  }
-
-  unbind(user) {
-    user.off('changed', this.onChange)
-  }
-  
-  // Game
-  async startGame() {
-    const toStartTime = this.gameConfig.get('aboutToStartTime')
-    this.ioRoom.emit('game-about-to-start', toStartTime);
-    await sleep(toStartTime*1000);
-    
-    //Create and start a game
-    const game = new Game(this, this.gameConfig)
-    this.game = game;
-    game.start();
-  }
 
   destroy() {
     this.manager.destroy(this);
     Object.values(this.users).forEach(u => this.unbind(u))
+  }
+  
+  findUser(userID) {
+    return this.users.get(userID)
   }
 }
 

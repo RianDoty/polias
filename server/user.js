@@ -5,13 +5,12 @@ const maxNicknameLength = 20;
 
 //Represents a Socket inside of a Room
 class User extends EventEmitter {
-  constructor(socket, { name = "Unknown" } = {}) {
+  constructor(io, { userID, name = "Unknown" } = {}) {
     super();
-    //Reflect changes to the client socket
-    this.on("changed", (diff) => this.socket.emit("changed", diff));
+    //Reflect changes to the client sockets
+    this.on("changed", (diff) => this.sock.emit("changed", diff));
 
     Object.assign(this, {
-      socket,
       name,
       host: false,
       ready: false,
@@ -22,6 +21,10 @@ class User extends EventEmitter {
     })
     
     this.generateUuid();
+  }
+  
+  getSockets() {
+    return 
   }
 
   setNickname(nickname) {

@@ -5,20 +5,22 @@ const http = require("http").Server(app);
 const { Server } = require("socket.io");
 const io = new Server(http);
 
-// Socket.io
-
-//Session
-require('./sessions').initSessions(io)
-
-//Handlers
-const initUser = require('./user-manager')
-const handleDisconnect = require('./on-user-disconnect') 
 const RoomManager = require('./room-manager')(io)
 
-io.on('connection', (socket) => {
-  initUser(io, socket)
-  handleDisconnect(io, socket)
-  RoomManager.listen(socket)
+//Room Creation
+io.on('connection', socket => {
+  socket.on('log', (data) => {
+    console.log(data)
+  })
+  
+  socket.on('room:create', (roomData, ackCode) => {
+    try {
+      console.log('creating a room...')
+      ackCode([true, RoomManager.createRoom(roomData).code])
+    } catch(err) {
+      ackCode([false, 'Error when creating a Room.'])
+    }
+  })
 })
 
 //  Boring server stuff
@@ -40,13 +42,15 @@ let port;
 console.log("❇️ NODE_ENV is", process.env.NODE_ENV);
 if (process.env.NODE_ENV === "production") {
   port = process.env.PORT || 3000;
+  
   app.use(express.static(path.join(__dirname, "../build")));
   app.get("*", (request, response) => {
     response.sendFile(path.join(__dirname, "../build", "index.html"));
   });
 } else {
   port = 3001;
-  console.log("⚠️ Running development server")
+  
+  console.log("⚠️ Running development server");
 }
 
 // Start the listener!

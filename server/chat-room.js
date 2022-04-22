@@ -3,89 +3,44 @@ const SyncHost = require('./sync');
 
 class ChatRoom {
   constructor(io, roomCode, chatKeyword) {
-    const keyword = `room chat ${chatKeyword} ${roomCode}`;
-    /** 
-     * The keyword pertaining to this ChatRoom inside of its current Room. 
-     * 
-     * @type {string}
-    */
-    this.keyword = keyword;
-    
-    /**
-     * The SyncHost that syncs the list of messages across all clients.
-     * 
-     * @type {SyncHost}
-     */
-    this.sync = new SyncHost(io, keyword);
-    /**
-     * The list of all Sockets connected to the ChatRoom.
-     * 
-     * @type {object}
-     */
-    this.sockets = {};
-    /**
-     * All of the listeners for each socket, indexed by socket objects.
-     * 
-     * @type {Map}
-     */
-    this.callbacks = new Map();
+    const keyword = `room chat ${chatKeyword}`;
+
+    Object.assign(this, {
+      keyword,
+      sync: new SyncHost(io, keyword),
+      sockets: new Set(),
+      callbacks: new Map()
+    })
   }
   
-  /**
-   * Joins a socket into the room.
-   * 
-   * @param {Socket} socket The socket to join. 
-   */
   join(socket) {
     socket.join(this.keyword);
-    this.sockets[socket.id] = socket;
+    this.sockets.add(socket);
     this.connect(socket)
   }
   
-  /**
-   * Makes a socket leave the room.
-   * 
-   * @param {Socket} socket The socket to leave.
-   */
   leave(socket) {
     socket.leave(this.keyword);
-    delete this.sockets[socket.id]
+    this.sockets.delete(socket);
     this.disconnect(socket);
   }
   
-  /**
-   * Connects a Socket to the ChatRoom.
-   * 
-   * @param {Socket} socket The Socket to connect.
-   */
   connect(socket) {
-    const callbacks = {
-      sendMessage: this.sendMessage(socket)
-    }
+    const callbacks = [
+      [`send-message ${this.keyword}`, this.sendMessage(socket)]
+    ]
     this.callbacks.set(socket, callbacks)
     
-    socket.on(`send-message ${this.keyword}`, callbacks.sendMessage);
+    for (const [keyword, cb] of callbacks) socket.on(keyword, cb);
   }
   
-  /**
-   * Disconnects a Socket from the ChatRoom.
-   * 
-   * @param {Socket} socket The Socket to disconnect.
-   */
   disconnect(socket) {
     const callbacks = this.callbacks.get(socket);
     
-    socket.off(`send-message ${this.keyword}`, callbacks.sendMessage);
+    for (const [keyword, cb] of callbacks) socket.off(keyword, cb)
   }
 
-  // Below functions generate callbacks
-  /**
-   * Creates a callback for when the supplied socket wants to send a message.
-   * 
-   * @param {Socket} socket The socket to listen to.
-   * @returns {function} The callback that sends a message from the socket when called.
-   */
-  sendMessage(socket) {
+  sendMessageCallback(socket) {
     return (id, content) => {
       this.sync.create(id, {
         author: socket.user.template(),
