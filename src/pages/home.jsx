@@ -99,9 +99,10 @@ const RoomCreator = () => {
 
     console.log("submitted");
     //Tell the server to create a room with the given name
-    socket.emit("create-room", name, (code) => {
+    socket.emit("room:create", name, ([success, code]) => {
       //After the room is created with a random code, join that room
-      setLocation(`/game/${code}`);
+      if (success) setLocation(`/game/${code}`);
+      else {/*Handle error*/}
     });
   };
 
