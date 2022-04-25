@@ -1,38 +1,24 @@
-const SyncHost = require('./sync')
 const User = require('./user')
 const ChatRoomManager = require('./chat-manager')
 const CardManager = require('./card-manager')
-const Game = require('./gameAssets/game')
 const Config = require('./config')
 const RoomSyncManager = require('./room-sync-manager')
+const UserManager = require('./user-manager')
+const Base = require('./base')
 
 //Class to manage data storage for a room, which hosts games
-class Room {
+class Room extends Base {
   constructor(manager, { code, name, host, password }) {
-    const { io } = manager;
+    super(manager.io)
 
-    const ioNamespace = io.of(`/${this.code}`);
+    const ioNamespace = this.io.of(`/${this.code}`);
 
-    Object.assign(this, {
-      io,
-      ioNamespace,
-      code,
-      name,
-      users: new Map(),
-      manager,
-      host,
-      password
-    })
-
-    //Namespace
+    //Password Authentication
     ioNamespace.use((socket, next) => {
-      //Verify password (if the room uses one)
       const { password } = socket.auth;
 
       if (this.password) {
-        if (this.password === password) {
-          return next()
-        } else {
+        if (this.password !== password) {
           return next(new Error('Invalid Password'))
         }
       }
@@ -40,16 +26,22 @@ class Room {
       next()
     })
 
+    Object.assign(this, {
+      ioNamespace,
+      code,
+      name,
+      manager,
+      host,
+      password
+    })
 
+    this.users = new UserManager(this)
 
-    // Chat
-    this.chatManager = new ChatRoomManager(io, code);
-    this.generateChatRooms();
+    this.chatManager = new ChatRoomManager(this);
+    this.chatManager.generateChatRooms();
 
-    //Cards
     this.cardManager = new CardManager(this)
 
-    // Game
     this.gameConfig = new Config({
       aboutToStartTime: {
         type: 'number',
