@@ -1,17 +1,19 @@
 const { v4: uuidv4 } = require("uuid");
 const EventEmitter = require("events");
+const BaseRoomStructure = require("./base-room-structure");
 
 const maxNicknameLength = 20;
 
 //Represents a Socket inside of a Room
-class User extends EventEmitter {
-  constructor(io, { userID, name = "Unknown" } = {}) {
-    super();
+class User extends BaseRoomStructure {
+  constructor(room, { userID, name = "Unknown" } = {}) {
+    super(room);
     //Reflect changes to the client sockets
     this.on("changed", (diff) => this.sock.emit("changed", diff));
 
     Object.assign(this, {
       name,
+      userID,
       host: false,
       ready: false,
       inGame: false,
