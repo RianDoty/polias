@@ -5,9 +5,10 @@ function initSession(socket) {
   
   if (sessionID) {
     socket.auth = { sessionID }
+    socket.connect() 
   }
   
-  socket.on("session", ({ sessionID, userID }) => {
+  socket.on("session", ({ sessionID, userID, username }) => {
     socket.auth = { sessionID };
 
     localStorage.setItem("sessionID", sessionID);

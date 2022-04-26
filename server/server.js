@@ -2,26 +2,63 @@ const express = require("express");
 const path = require("path");
 const app = express();
 const http = require("http").Server(app);
+const { v4: uuid } = require("uuid");
 const { Server } = require("socket.io");
 const io = new Server(http);
 
-const RoomManager = require('./room-manager')(io)
+const SessionStore = require("./session-store");
+const RoomManager = require("./room-manager")(io);
 
-//Room Creation
-io.on('connection', socket => {
-  socket.on('log', (data) => {
-    console.log(data)
-  })
-  
-  socket.on('room:create', (roomData, ackCode) => {
-    try {
-      console.log('creating a room...')
-      ackCode([true, RoomManager.createRoom(roomData).code])
-    } catch(err) {
-      ackCode([false, 'Error when creating a Room.'])
+//Sessions
+io.use((socket, next) => {
+  const { sessionID } = socket.handshake.auth;
+
+  if (sessionID) {
+    const session = SessionStore.findSession(sessionID);
+
+    if (session) {
+      //Restore old session
+      socket.sessionID = sessionID;
+      socket.userID = session.userID;
+      socket.roomCode = session.roomCode;
+      socket.username = session.username;
+
+      return next();
     }
-  })
-})
+  }
+
+  const { username } = socket.handshake.auth;
+  if (!username) return next(new Error("Invalid username"));
+
+  //Create new session
+  socket.sessionID = uuid();
+  socket.userID = uuid();
+  socket.username = username;
+  socket.roomCode = null;
+
+  next();
+});
+
+io.on("connection", (socket) => {
+  const { sessionID, userID, roomCode, username } = socket;
+  const session = { sessionID, userID, roomCode, username };
+  
+  socket.emit("session", session);
+  SessionStore.saveSession(sessionID, session)
+
+  socket.on("room:create", (roomData) => {
+    try {
+      console.log("creating a room...");
+      const { code } = RoomManager.createRoom(roomData);
+      socket.emit("room:send", code);
+    } catch (err) {
+      console.error("error when creating room");
+      console.error(err);
+    }
+  });
+  
+  socket.on('log', (...args) => console.log(...args))
+});
 
 //  Boring server stuff
 // Swap over non-https connections to https
@@ -42,14 +79,14 @@ let port;
 console.log("❇️ NODE_ENV is", process.env.NODE_ENV);
 if (process.env.NODE_ENV === "production") {
   port = process.env.PORT || 3000;
-  
+
   app.use(express.static(path.join(__dirname, "../build")));
   app.get("*", (request, response) => {
     response.sendFile(path.join(__dirname, "../build", "index.html"));
   });
 } else {
   port = 3001;
-  
+
   console.log("⚠️ Running development server");
 }
 

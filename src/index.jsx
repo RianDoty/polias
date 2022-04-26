@@ -2,14 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
-
-import socket from './socket'
-
-//Replace console.log with a mock that sends its messages to the server
-console.log = (msg) => socket.emit('log', msg)
-
-console.log('hehehehe')
+import Testing from './Testing'
 
 ReactDOM.render(
-  <React.StrictMode><App /></React.StrictMode>, 
+  <React.StrictMode><Testing /></React.StrictMode>, 
 document.getElementById('root'));
