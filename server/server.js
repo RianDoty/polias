@@ -14,9 +14,11 @@ io.use((socket, next) => {
   const { sessionID } = socket.handshake.auth;
 
   if (sessionID) {
+    console.log('session ID provided. Finding session...')
     const session = SessionStore.findSession(sessionID);
 
     if (session) {
+      console.log('session found!')
       //Restore old session
       socket.sessionID = sessionID;
       socket.userID = session.userID;
@@ -25,6 +27,7 @@ io.use((socket, next) => {
 
       return next();
     }
+    console.log('session not found on the server.')
   }
 
   const { username } = socket.handshake.auth;

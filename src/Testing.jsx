@@ -14,7 +14,7 @@ export default () => {
   
   useEffect(()=>{
     socket.auth = { username: 'hehehaha' }
-    socket.connect()
+    if (!socket.connected) socket.connect()
   },[])
   
   return (
