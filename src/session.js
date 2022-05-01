@@ -4,6 +4,7 @@ function initSession(socket) {
   const sessionID = localStorage.getItem('sessionID')
   
   if (sessionID) {
+    console.log('session id', sessionID)
     socket.auth = { sessionID }
     socket.connect() 
   }

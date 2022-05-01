@@ -6,49 +6,28 @@ const { v4: uuid } = require("uuid");
 const { Server } = require("socket.io");
 const io = new Server(http);
 
-const SessionStore = require("./session-store");
 const RoomManager = require("./room-manager")(io);
 
-//Sessions
 io.use((socket, next) => {
-  const { sessionID } = socket.handshake.auth;
-
+  const { sessionID } = socket.handshake.auth
+  
   if (sessionID) {
-    const session = SessionStore.findSession(sessionID);
-
-    if (session) {
-      //Restore old session
-      socket.sessionID = sessionID;
-      socket.userID = session.userID;
-      socket.roomCode = session.roomCode;
-      socket.username = session.username;
-
-      return next();
-    }
+    return next()
   }
-
-  const { username } = socket.handshake.auth;
-  if (!username) return next(new Error("Invalid username"));
-
-  //Create new session
-  socket.sessionID = uuid();
-  socket.userID = uuid();
-  socket.username = username;
-  socket.roomCode = null;
-
-  next();
-});
+  
+  const { username } = socket.handshake.auth
+  if (!username) return next(new Error('Invalid Username!'))
+})
 
 io.on("connection", (socket) => {
-  const { sessionID, userID, roomCode, username } = socket;
-  const session = { sessionID, userID, roomCode, username };
-  
-  socket.emit("session", session);
-  SessionStore.saveSession(sessionID, session)
-
   socket.on("room:create", (roomData) => {
     try {
       console.log("creating a room...");
+      
+      Object.assign(roomData, {
+        host: socket
+      })
+      
       const { code } = RoomManager.createRoom(roomData);
       socket.emit("room:send", code);
     } catch (err) {
