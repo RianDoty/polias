@@ -8,28 +8,23 @@ const io = new Server(http);
 
 const RoomManager = require("./room-manager")(io);
 
-io.use((socket, next) => {
-  const { sessionID } = socket.handshake.auth
-  
-  if (sessionID) {
-    return next()
-  }
-  
-  const { username } = socket.handshake.auth
-  if (!username) return next(new Error('Invalid Username!'))
-})
-
 io.on("connection", (socket) => {
-  socket.on("room:create", (roomData) => {
+  console.log('connection')
+  socket.on('username', (username) => {
+    socket.username = username
+  })
+  
+  socket.on("room_create", (roomData) => {
     try {
       console.log("creating a room...");
+      if (!socket.username) throw 'Invalid username';
       
       Object.assign(roomData, {
         host: socket
       })
       
       const { code } = RoomManager.createRoom(roomData);
-      socket.emit("room:send", code);
+      socket.emit("room_send", code);
     } catch (err) {
       console.error("error when creating room");
       console.error(err);

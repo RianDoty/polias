@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { useLocation, Link } from "wouter";
 
-import UserContext from "../contexts/user";
+import useUsername from "../contexts/username";
 
 import "../styles/header.css";
 
@@ -30,12 +30,11 @@ const Content = () => {
 };
 
 const Profile = () => {
-  const user = useContext(UserContext);
+  const [username] = useUsername();
 
-  const { name = "Unnamed" } = user;
   return (
     <div className="header-profile">
-      <span>{name}</span>
+      <span>{username}</span>
     </div>
   );
 };

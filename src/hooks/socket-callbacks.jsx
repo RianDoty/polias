@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
-import socket from '../socket.js'
+import useSocket from '../contexts/socket'
 
 //Connects a list of functions to the socket
 //Functions in {eventName: func} format
 export default (callbackData) => {
+  const socket = useSocket()
+  
   useEffect(()=>{
     if (!socket || !callbackData) return;
     
