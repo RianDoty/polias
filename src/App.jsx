@@ -1,27 +1,29 @@
 import React from "react";
 import { Router } from "wouter";
 import PageRouter from "./components/router";
+import socket from "./socket";
 
 import "./styles/App.css";
 import useUser from "./hooks/user";
 
 import TopBar from "./components/top-bar";
 
-import UserContext from "./contexts/user";
+import { UsernameProvider } from "./contexts/username";
+import { SocketProvider } from "./contexts/socket";
 
 function App() {
-  const user = useUser()
-  
   return (
     <div className="App">
-      <UserContext.Provider value={user}>
-        <TopBar/>
-        <Router>
-          <main className="app-main">
-            <PageRouter/>
-          </main>
-        </Router>
-      </UserContext.Provider>
+      <UsernameProvider>
+        <SocketProvider value={socket}>
+          <TopBar />
+          <Router>
+            <main className="app-main">
+              <PageRouter />
+            </main>
+          </Router>
+        </SocketProvider>
+      </UsernameProvider>
     </div>
   );
 }

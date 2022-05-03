@@ -1,9 +1,11 @@
 //Manages chat rooms
 const ChatRoom = require("./chat-room");
+const BaseManager = require('./base-manager')
 
-class ChatRoomManager {
-  constructor(io) {
-    this.io = io;
+class ChatRoomManager extends BaseManager {
+  constructor(room) {
+    super(room)
+    
     this.rooms = new Map();
   }
   

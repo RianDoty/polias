@@ -3,11 +3,12 @@ import { useState, useContext } from "react";
 import { useLocation, Link } from "wouter";
 import useSync from "../hooks/sync";
 
-import UserContext from "../contexts/user";
+import useUsername from "../contexts/username";
 
 import "../styles/home.css";
 
-import socket from "../socket";
+import useSocket from "../contexts/socket";
+import useSocketCallbacks from '../hooks/socket-callbacks'
 
 //Components
 const Section = ({ children }) => (
@@ -32,7 +33,8 @@ const CellHeader = ({ children }) => (
 const Error = ({ children }) => <span className="error">{children}</span>;
 
 //Displays a form for the user to enter their name
-const NameEntry = ({ user }) => {
+const NameEntry = ({ setUsername }) => {
+  const socket = useSocket()
   const [inpVal, updateInpVal] = useState("");
   const [err, setErr] = useState("");
   
@@ -41,12 +43,12 @@ const NameEntry = ({ user }) => {
 
     try {
       if (inpVal) {
+        const username = inpVal
         //The input is valid, set the user's name
-        user.update("name", inpVal);
+        setUsername(username)
 
-        //Connect to the server
-        socket.auth = { username: inpVal };
-        socket.connect();
+        //Submit username to server
+        socket.emit('username', username)
       } else throw Error("Invalid name!");
 
       setErr("")
@@ -84,26 +86,22 @@ const NameEntry = ({ user }) => {
 
 //Displays a form for naming and creating a room
 const RoomCreator = () => {
+  const socket = useSocket()
   const [err, setErr] = useState();
   const [name, setName] = useState("");
-  const [, setLocation] = useLocation();
-  const user = useContext(UserContext);
+  const [username] = useUsername();
 
   const onSubmit = (e) => {
     e.preventDefault();
 
-    if (!user.name || user.name === "Unnamed") {
+    if (!username || username === "Unnamed") {
       setErr("Set your name!");
       return false;
     }
 
     console.log("submitted");
     //Tell the server to create a room with the given name
-    socket.emit("room:create", name, ([success, code]) => {
-      //After the room is created with a random code, join that room
-      if (success) setLocation(`/game/${code}`);
-      else {/*Handle error*/}
-    });
+    socket.emit("room_create", name);
   };
 
   let errComponent;
@@ -145,7 +143,7 @@ const RoomEntry = ({ room }) => {
     <Link href={`/game/${code}`}>
       <strong>{name}</strong>
       <div className="muted">
-        Hosted by {hostName}{" "}
+        Hosted by {hostName}{"  "}
         <span className="p-4px">
           <strong>
             {pCount}
@@ -160,10 +158,20 @@ const RoomEntry = ({ room }) => {
 
 //Page
 export default function Home() {
-  const user = useContext(UserContext);
-
+  const [username, setUsername] = useUsername();
+  const [connected, setConnected] = useState(false)
+  const [, setLocation] = useLocation()
+  
+  useSocketCallbacks({
+    connect: () => {setConnected(true); console.log('conn')},
+    disconnect: () => setConnected(false),
+    connect_error: (e) => {setConnected(false); console.log('err', e.message)},
+    room_send: (code) => setLocation(`/game/${code}`)
+  })
+  
+  
   let middleSection;
-  if (user.name) {
+  if (connected) {
     middleSection = (
       <Section>
         <Cell wClass="w-3-5" header="Current Games">
@@ -199,7 +207,7 @@ export default function Home() {
       <h2>Get Started</h2>
       <Section>
         <Cell wClass="w-1-2 center-float" header="Enter your Name">
-          <NameEntry user={user} />
+          <NameEntry setUsername={setUsername} />
         </Cell>
       </Section>
       {middleSection}

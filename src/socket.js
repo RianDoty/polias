@@ -1,7 +1,7 @@
 import io from 'socket.io-client';
 import initSession from './session'
 
-const socket = io({ autoConnect: false })
+const socket = io()
 
 //Logging
 // socket.onAnyOutgoing((event, ...args) => {

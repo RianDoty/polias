@@ -14,8 +14,7 @@ import NameEntryScreen from "../components/game/name-entry-screen";
 //Style
 import "../styles/game.css";
 
-export default function RoomMain({ params }) {
-  const { code } = params;
+export default function RoomMain({ params: { code } }) {
   const { cardPack } = useRoom(code);
 
   return (
