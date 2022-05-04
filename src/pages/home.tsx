@@ -49,7 +49,7 @@ const NameEntry = ({ setUsername }) => {
 
         //Submit username to server
         socket.emit('username', username)
-      } else throw Error("Invalid name!");
+      } else throw "Invalid name!";
 
       setErr("")
     } catch (err) {
@@ -68,7 +68,7 @@ const NameEntry = ({ setUsername }) => {
         type="text"
         className="transparent-input"
         value={inpVal}
-        maxLength="20"
+        maxLength={20}
         onChange={(e) => {
           try {
             updateInpVal(e.target.value);
@@ -87,7 +87,7 @@ const NameEntry = ({ setUsername }) => {
 //Displays a form for naming and creating a room
 const RoomCreator = () => {
   const socket = useSocket()
-  const [err, setErr] = useState();
+  const [err, setErr] = useState('');
   const [name, setName] = useState("");
   const [username] = useUsername();
 

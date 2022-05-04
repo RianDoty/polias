@@ -1,18 +1,24 @@
-const SyncHost = require("./sync");
-const Room = require("./room");
-const { randomCode, unregisterCode } = require("./random-code");
+import Base from "./base";
+import Room, { RoomData } from "./room";
+import SyncHost from "./sync";
+import { randomCode, unregisterCode } from "./random-code";
+import { Server } from "socket.io";
 
 const noop = () => {};
 
-class RoomManager {
-  constructor(io) {
-    this.io = io;
+class RoomManager extends Base {
+  rooms: Map<string, Room>
+  syncHost: SyncHost
+
+  constructor(io: Server) {
+    super(io)
+
     this.rooms = new Map();
     
     this.syncHost = new SyncHost(io, "rooms");
   }
 
-  createRoom(roomData) {
+  createRoom(roomData: RoomData) {
     const { code } = roomData;
     const { syncHost } = this;
     
@@ -23,20 +29,21 @@ class RoomManager {
     return newRoom
   }
 
-  destroyRoom(room) {
+  destroyRoom(room: Room) {
     const { code } = room;
     this.rooms.delete(code);
     this.syncHost.delete(code);
     unregisterCode(code)
   }
 
-  roomExists(code) {
+  roomExists(code: string) {
     return this.rooms.has(code);
   }
 
-  findRoom(code) {
+  findRoom(code: string) {
     return this.rooms.get(code);
   }
 }
 
-module.exports = (io) => new RoomManager(io);
+export default (io: Server) => new RoomManager(io);
+export type { RoomManager }

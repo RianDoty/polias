@@ -1,8 +1,9 @@
-const SessionStore = require("./session-store");
-const { v4: uuid } = require("uuid");
+import SessionStore from "./session-store";
+import { v4 as uuid } from "uuid";
+import { Socket } from "socket.io";
 
 module.exports.initSessions = (io) => {
-  io.use((socket, next) => {
+  io.use((socket: Socket, next) => {
     const { sessionID } = socket.handshake.auth;
 
     if (sessionID) {

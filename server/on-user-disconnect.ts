@@ -4,7 +4,7 @@ function onDisconnect(io, socket) {
   saveSession(socket)
 }
 
-module.exports = (io, socket) => {
+export default (io, socket) => {
   socket.on('disconnect', async () => {
     //If all of the sockets controlling that same user have been disconnected..
     const sameUserSockets = await io.in(socket.userID).allSockets();

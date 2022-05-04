@@ -1,21 +1,49 @@
-const User = require('./user')
-const ChatRoomManager = require('./chat-manager')
-const CardManager = require('./card-manager')
-const Config = require('./config')
-const RoomSyncManager = require('./room-sync-manager')
-const UserManager = require('./user-manager')
-const Base = require('./base')
+import User from './user'
+import ChatRoomManager from './chat-manager'
+import CardManager from './card-manager'
+import Config from './config'
+import RoomSyncManager from './room-sync-manager'
+import UserManager from './user-manager'
+import Base from './base'
+import type { RoomManager } from './room-manager'
+import type { Namespace, Socket } from 'socket.io'
+
+export interface RoomData {
+  code: string
+  name: string
+  host: Socket
+  password?: string
+}
 
 //Class to manage data storage for a room, which hosts games
 class Room extends Base {
-  constructor(manager, { code, name, host, password }) {
+  users: UserManager
+  cardManager: CardManager
+  chatManager: ChatRoomManager
+  code: string
+  password?: string
+  name: string
+  manager: RoomManager
+  host: Socket
+  ioNamespace: Namespace
+  gameConfig: Config
+  syncManager: RoomSyncManager
+
+  constructor(manager: RoomManager, { code, name, host, password } : RoomData) {
     super(manager.io)
 
+    this.code = code
+    this.name = name
+    this.manager = manager
+    this.host = host
+    this.password = password
+
     const ioNamespace = this.io.of(`/${this.code}`);
+    this.ioNamespace = ioNamespace
 
     //Password Authentication
     ioNamespace.use((socket, next) => {
-      const { password } = socket.auth;
+      const { password } = socket.handshake.auth;
 
       if (this.password) {
         if (this.password !== password) {
@@ -24,15 +52,6 @@ class Room extends Base {
       }
 
       next()
-    })
-
-    Object.assign(this, {
-      ioNamespace,
-      code,
-      name,
-      manager,
-      host,
-      password
     })
 
     this.users = new UserManager(this)
@@ -164,4 +183,4 @@ class Room extends Base {
   }
 }
 
-module.exports = Room;
+export default Room;

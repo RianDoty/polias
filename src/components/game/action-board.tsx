@@ -42,7 +42,7 @@ const StartGameButton = () => {
   
   const onClick = (e) => {
     //Signal the server to start the game
-    socket.emit()
+    socket.emit('game_start')
   }
   
   return (

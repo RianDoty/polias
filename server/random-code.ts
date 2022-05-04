@@ -2,10 +2,10 @@
 const usedCodes = new Set();
 
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""); //Array of all capital letters
-function randomCode(length = 4) {
+export function randomCode(length = 4) {
   const maxAttempts = 100;
   let attempts = 0;
-  let data;
+  let data: string;
   do {
     //Generate a random code
     data = "";
@@ -22,9 +22,7 @@ function randomCode(length = 4) {
   return data;
 }
 
-function unregisterCode(code = "") {
+export function unregisterCode(code = "") {
   //Make a code usable now that it doesn't have a purpose anymore
   usedCodes.delete(code)
 }
-
-module.exports = { randomCode, unregisterCode };

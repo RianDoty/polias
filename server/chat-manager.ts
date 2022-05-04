@@ -22,4 +22,4 @@ class ChatRoomManager extends BaseManager {
   }
 }
 
-module.exports = ChatRoomManager;
+export default ChatRoomManager;

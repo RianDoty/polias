@@ -42,4 +42,4 @@ class Game extends EventEmitter {
   }
 }
 
-module.exports = Game;
+export default Game;

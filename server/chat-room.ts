@@ -50,4 +50,4 @@ class ChatRoom {
   }
 }
 
-module.exports = ChatRoom;
+export default ChatRoom;

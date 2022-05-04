@@ -92,4 +92,4 @@ class CardManager {
   }
 }
 
-module.exports = CardManager;
+export default CardManager;

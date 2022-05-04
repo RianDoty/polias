@@ -13,14 +13,15 @@ import NameEntryScreen from "../components/game/name-entry-screen";
 
 //Style
 import "../styles/game.css";
+import { RouteComponentProps } from "wouter";
 
-export default function RoomMain({ params: { code } }) {
+export default function RoomMain({ params: { code } }: RouteComponentProps<{code: string}>) {
   const { cardPack } = useRoom(code);
 
   return (
     <RoomContext.Provider value={code}>
       <CardPackContext.Provider value={cardPack}>
-        <LeftSideBar />
+        <LeftSideBar players={{}} />
         <MiddleContent />
         <Console />
         <NameEntryScreen />

@@ -8,7 +8,7 @@ export default function useRoom(code) {
   
   useEffect(()=>{
     socket.emit('join room', code);
-    return ()=>socket.emit('leave room', code);
+    return ()=>void socket.emit('leave room', code);
   }, [])
 
   return roomState

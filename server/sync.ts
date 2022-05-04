@@ -1,14 +1,26 @@
+import { Namespace, RemoteSocket, Server, Socket } from "socket.io";
+import Base from "./base";
+
 const clone = require('lodash.clonedeep')
 
-class SyncHost {
-  constructor(io, keyword, startingData = {}) {
-    this.io = io;
+class SyncHost<V> extends Base {
+  keyword: string
+  data: {[key: string]: V}
+  sockets: Set<Socket>
+  connectSocket: (s: Socket | RemoteSocket<{}>) => void
+  subscribeSocket: Map<Socket, ()=>void>
+  unsubscribeSocket: Map<Socket, ()=>void>
+
+  constructor(io: Server | Namespace, keyword: string) {
+    super(io)
+
     this.keyword = keyword;
-    this.data = clone(startingData);
-    this.sockets = {};
+    this.data = {}
+    this.sockets = new Set();
+    
 
     //Connect all future and current sockets
-    if (!io) return console.warn('SyncHost not given an IO server!')
+    if (!io) throw 'SyncHost not given an IO server!'
     
     this.connectSocket = s => this.connect(s)
     io.fetchSockets().then(s => s.forEach(this.connectSocket));
@@ -101,4 +113,4 @@ class SyncHost {
   }
 }
 
-module.exports = SyncHost;
+export default SyncHost;

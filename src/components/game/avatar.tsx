@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import CardPackContext from '../../contexts/cardPack';
-import avatars from './avatars'
+import avatars from './avatars.json'
 const {default: defaultAvatar, cardPacks} = avatars;
 
 const Avatar = ({user}) => {

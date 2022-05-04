@@ -4,7 +4,6 @@ import PageRouter from "./components/router";
 import socket from "./socket";
 
 import "./styles/App.css";
-import useUser from "./hooks/user";
 
 import TopBar from "./components/top-bar";
 

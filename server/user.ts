@@ -1,6 +1,6 @@
-const { v4: uuidv4 } = require("uuid");
-const EventEmitter = require("events");
-const BaseRoomStructure = require("./base-room-structure");
+import { v4 as uuidv4 } from "uuid";
+import EventEmitter from "events";
+import BaseRoomStructure from './base-room-structure';
 
 const maxNicknameLength = 20;
 
@@ -89,4 +89,4 @@ class User extends BaseRoomStructure {
   }
 }
 
-module.exports = User;
+export default User

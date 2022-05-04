@@ -1,4 +1,3 @@
-const uuid = require('uuid');
 
 class SessionStore {
   constructor(sessions = new Map()) {
@@ -20,4 +19,4 @@ class SessionStore {
   }
 }
 
-module.exports = new SessionStore()
+export default new SessionStore()

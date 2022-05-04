@@ -1,14 +1,18 @@
+import { NextFunction, Request, Response } from "express";
+import { ClientRequest, ServerResponse } from "http";
+import { Http2ServerRequest, Http2ServerResponse } from "http2";
+import { Socket } from "socket.io";
+
 const express = require("express");
 const path = require("path");
 const app = express();
 const http = require("http").Server(app);
-const { v4: uuid } = require("uuid");
 const { Server } = require("socket.io");
 const io = new Server(http);
 
 const RoomManager = require("./room-manager")(io);
 
-io.on("connection", (socket) => {
+io.on("connection", (socket: Socket & {username: string}) => {
   console.log('connection')
   socket.on('username', (username) => {
     socket.username = username
@@ -36,9 +40,10 @@ io.on("connection", (socket) => {
 
 //  Boring server stuff
 // Swap over non-https connections to https
-function checkHttps(request, response, next) {
+function checkHttps(request:Request, response:Response, next:NextFunction) {
   // Check the protocol — if http, redirect to https.
-  if (request.get("X-Forwarded-Proto").indexOf("https") != -1) {
+  const proto = request.get("X-Forwarded-Proto")
+  if (proto && proto.indexOf("https") != -1) {
     return next();
   } else {
     response.redirect("https://" + request.hostname + request.url);
@@ -49,13 +54,13 @@ app.all("*", checkHttps);
 
 // Express port-switching logic
 // no touch
-let port;
+let port: string | number;
 console.log("❇️ NODE_ENV is", process.env.NODE_ENV);
 if (process.env.NODE_ENV === "production") {
   port = process.env.PORT || 3000;
 
   app.use(express.static(path.join(__dirname, "../build")));
-  app.get("*", (request, response) => {
+  app.get("*", (request:Request, response:Response) => {
     response.sendFile(path.join(__dirname, "../build", "index.html"));
   });
 } else {

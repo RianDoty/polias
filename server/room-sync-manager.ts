@@ -1,5 +1,11 @@
-module.exports = class RoomSyncManager {
-    constructor(room) {
+import BaseManager from "./base-manager"
+import type Room from "./room"
+import SyncHost from "./sync"
+
+export default class RoomSyncManager extends BaseManager {
+    constructor(room: Room) {
+        super(room)
+
         Object.assign(this, {
             room,
             usersSync: new SyncHost(ioNamespace, `room users ${code}`, {}),
