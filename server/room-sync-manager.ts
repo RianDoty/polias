@@ -1,15 +1,24 @@
 import BaseManager from "./base-manager"
-import type Room from "./room"
 import SyncHost from "./sync"
 
+import type Room from "./room"
+import type { RoomTemplate } from "./room"
+import type { UserTemplate } from "./user"
+import type User from "./user"
+
 export default class RoomSyncManager extends BaseManager {
+    usersSync!: SyncHost<UserTemplate>
+    stateSync!: SyncHost<any>
+    listSync!: SyncHost<RoomTemplate>
+
     constructor(room: Room) {
         super(room)
 
+        const { io, code } = this;
+
         Object.assign(this, {
-            room,
-            usersSync: new SyncHost(ioNamespace, `room users ${code}`, {}),
-            stateSync: new SyncHost(ioNamespace, `room state ${code}`, {
+            usersSync: new SyncHost(io, `room users ${code}`, {}),
+            stateSync: new SyncHost(io, `room state ${code}`, {
                 state: 'lobby',
                 cardPack: 'fruits'
             }),
@@ -17,23 +26,23 @@ export default class RoomSyncManager extends BaseManager {
         })
     }
 
-    addUser(user) {
+    addUser(user: User) {
         this.usersSync.create(user.userID, user.template())
     }
 
-    deleteUser(user) {
+    deleteUser(user: User) {
         this.usersSync.delete(user.userID)
     }
 
-    updateUser(...pathThenValue) {
+    updateUser(user: User, ...pathThenValue: any[]) {
         this.usersSync.update(user.userID, pathThenValue)
     }
 
-    updateState(key, value) {
+    updateState(key: string, value: any) {
         this.stateSync.update(key, value)
     }
 
-    updateList(key, value) {
+    updateList(key: string, value: any) {
         this.listSync.update(key, value)
     }
 }

@@ -1,5 +1,6 @@
 import Base from "./base";
-import Room, { RoomData } from "./room";
+import Room from "./room";
+import type { RoomData, RoomTemplate } from './room'
 import SyncHost from "./sync";
 import { randomCode, unregisterCode } from "./random-code";
 import { Server } from "socket.io";
@@ -8,7 +9,7 @@ const noop = () => {};
 
 class RoomManager extends Base {
   rooms: Map<string, Room>
-  syncHost: SyncHost
+  syncHost: SyncHost<RoomTemplate>
 
   constructor(io: Server) {
     super(io)
