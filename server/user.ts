@@ -1,40 +1,53 @@
 import { v4 as uuidv4 } from "uuid";
 import EventEmitter from "events";
 import BaseRoomStructure from './base-room-structure';
+import type Room from "./room";
+import { Socket } from "socket.io";
 
 const maxNicknameLength = 20;
 
+export interface UserTemplate {
+  //{ name, userID, isHost, ready, role }
+  name: string
+  userID: string
+  isHost: boolean
+  ready: boolean
+  role: string
+}
+
 //Represents a Socket inside of a Room
 class User extends BaseRoomStructure {
-  constructor(room, { userID, name = "Unknown" } = {}) {
+  name!: string;
+  userID!: string;
+  ready!: boolean;
+  inGame!: false;
+  room!: Room;
+  role!: string;
+
+  constructor(room: Room, { userID, name = "Unknown" }: { userID: string, name: string }) {
     super(room);
-    //Reflect changes to the client sockets
-    this.on("changed", (diff) => this.sock.emit("changed", diff));
+
+    if (!userID) userID = uuidv4();
 
     Object.assign(this, {
       name,
       userID,
-      host: false,
       ready: false,
       inGame: false,
-      room: null,
+      room,
       role: "Chillin'",
-      cardId: -1
     })
-    
-    this.generateUuid();
-  }
-  
-  getSockets() {
-    return 
   }
 
-  setNickname(nickname) {
+  getSockets() {
+    return
+  }
+
+  setNickname(nickname: string) {
     //Verification
     if (nickname.length > maxNicknameLength) return false;
 
     this.name = nickname;
-    this.emit("changed", { name: nickname });
   }
 
   setReady(ready = !this.ready) {
@@ -43,49 +56,28 @@ class User extends BaseRoomStructure {
     if (!this.inGame) {
       const role = ready ? "Ready" : "Chillin'";
       this.role = role;
-      this.emit('changed', { role })
     }
-    this.emit("changed", { ready });
-  }
-  
-  setHost(isHost = false) {
-    this.emit('changed', {host: isHost});
   }
 
-  assignCard(cardId) {
-    this.cardId = cardId;
-    this.emit("changed", { cardId });
-  }
-
-  template() {
+  template(): UserTemplate {
     const {
       name,
-      socket: { id: socketId },
-      host,
-      cardId,
-      id,
+      userID,
       ready,
       role
     } = this;
-    return { name, socketId, host, cardId, id, ready, role };
+
+    const isHost = this.isHost()
+    return { name, userID, isHost, ready, role };
   }
 
   isHost() {
-    return this.room.isHost(this.socket);
-  }
-
-  generateUuid() {
-    this.id = uuidv4();
-    this.emit("changed", { id: this.id });
+    return this.room.isHost(this);
   }
 
   hasAdmin() {
     //Determines if a user has perms to change parts of the game
-    return this.isHost();
-  }
-  
-  static create(socket) {
-    socket.user = new User(socket, {})
+    return this.isHost;
   }
 }
 
