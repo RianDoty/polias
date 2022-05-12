@@ -1,4 +1,4 @@
-import User from './user'
+import type User from './user'
 import ChatRoomManager from './chat-manager'
 import CardManager from './card-manager'
 import Config from './config'
@@ -7,7 +7,6 @@ import UserManager from './user-manager'
 import Base from './base'
 import type { RoomManager } from './room-manager'
 import { Namespace, Server, Socket } from 'socket.io'
-import type { Client } from 'socket.io/dist/client'
 
 export interface RoomData {
   code: string

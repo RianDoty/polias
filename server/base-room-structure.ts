@@ -1,7 +1,9 @@
 import Base from './base'
-import Room from './room'
+import type Room from './room'
+import { RoomServer } from './room-socket-types'
 
 export default class BaseRoomStructure extends Base {
+    readonly io!: RoomServer
     readonly room!: Room
     readonly code!: string
 

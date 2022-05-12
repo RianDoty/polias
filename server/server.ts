@@ -1,27 +1,27 @@
-import { NextFunction, Request, Response } from "express";
-import { ClientRequest, ServerResponse } from "http";
-import { Http2ServerRequest, Http2ServerResponse } from "http2";
-import { Socket } from "socket.io";
+import type { NextFunction, Request, Response } from "express";
+import type { Server as MyServer, Socket as MySocket } from "./socket-types";
+import type { RoomData } from "./room";
 
-const express = require("express");
-const path = require("path");
+import express from "express";
+import path from "path";
 const app = express();
 const http = require("http").Server(app);
-const { Server } = require("socket.io");
-const io = new Server(http);
+import { Server } from 'socket.io'
+
+const io: MyServer = new Server(http);
 
 const RoomManager = require("./room-manager")(io);
-
-io.on("connection", (socket: Socket & {username: string}) => {
+ 
+io.on("connection", (socket: MySocket) => {
   console.log('connection')
-  socket.on('username', (username) => {
-    socket.username = username
+  socket.on('username', (username: string) => {
+    socket.data.username = username
   })
   
-  socket.on("room_create", (roomData) => {
+  socket.on("room_create", (roomData: RoomData) => {
     try {
       console.log("creating a room...");
-      if (!socket.username) throw 'Invalid username';
+      if (!socket.data.username) throw 'Invalid username';
       
       Object.assign(roomData, {
         host: socket
@@ -34,7 +34,6 @@ io.on("connection", (socket: Socket & {username: string}) => {
       console.error(err);
     }
   });
-  
   socket.on('log', (...args) => console.log(...args))
 });
 

@@ -1,8 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import EventEmitter from "events";
 import BaseRoomStructure from './base-room-structure';
 import type Room from "./room";
-import { Socket } from "socket.io";
 
 const maxNicknameLength = 20;
 

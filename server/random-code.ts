@@ -2,7 +2,7 @@
 const usedCodes = new Set();
 
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""); //Array of all capital letters
-export function randomCode(length = 4) {
+export function randomCode(length = 4): string {
   const maxAttempts = 100;
   let attempts = 0;
   let data: string;

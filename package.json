@@ -27,8 +27,8 @@
     "start": "npm run development",
     "development": "NODE_ENV=development concurrently --kill-others \"npm run client\" \"npm run server\"",
     "developmentVSC": "concurrently --kill-others \"npm run client\" \"npm run server\"",
-    "production": "npm run build && NODE_ENV=production npm run server",
-    "server": "node server/server.js",
+    "server": "node dist/server.js",
+    "build": "npx tsc",
     "client": "vite"
   },
   "engines": {

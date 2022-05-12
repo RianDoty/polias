@@ -3,7 +3,7 @@ import Room from "./room";
 import type { RoomData, RoomTemplate } from './room'
 import SyncHost from "./sync";
 import { randomCode, unregisterCode } from "./random-code";
-import { Server } from "socket.io";
+import type { Server } from "./socket-types";
 
 const noop = () => {};
 

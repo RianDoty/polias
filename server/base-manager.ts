@@ -1,5 +1,5 @@
 import BaseRoomStructure from "./base-room-structure";
-import Room from "./room";
+import type Room from "./room";
 
 export default class BaseManager extends BaseRoomStructure {
     constructor(room: Room) {

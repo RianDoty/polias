@@ -3,7 +3,7 @@ import User from './user';
 import BaseManager from './base-manager';
 import { v4 as uuid } from 'uuid'
 import type Room from './room';
-import type { Socket } from 'socket.io';
+import type { RoomSocket } from './room-socket-types';
 
 export default class UserManager extends BaseManager {
     users: Map<string, User>
@@ -18,7 +18,7 @@ export default class UserManager extends BaseManager {
         return this.users.get(userID)
     }
 
-    onConnection(socket: Socket) {
+    onConnection(socket: RoomSocket) {
         
     }
 

@@ -1,31 +1,45 @@
 
-const clamp = (n,min,max) => Math.max(Math.min(n, max), min)
+const clamp = (n:number,min:number,max:number) => Math.max(Math.min(n, max), min)
+
+export interface ConfigData {
+  [key:string]: {
+    type: 'number'
+    value: number
+    min: number
+    max: number
+  } | {
+    type: 'string'
+    value: string
+  }
+}
 
 class Config {
+  settings: ConfigData
+
   constructor(configData={}) {
     this.settings = configData
   }
   
-  set(configName, value) {
+  set(configName:string, value:unknown) {
     const configItem = this.settings[configName];
     
-    let newValue;
     switch(configItem.type) {
       case 'number':
         if (typeof(value) !== 'number') throw Error('Number config cannot be set to anything other than a number!');
-        newValue = clamp(value, configItem.min, configItem.max)
+        configItem.value =  clamp(value, configItem.min, configItem.max)
         break;
         
-      default:
-        newValue = value
+      case 'string':
+        if (typeof(value) !== 'string') throw Error('String config cannot be set to a value other than a string!')
+        configItem.value = value
         break;
     }
     
-    configItem.value = newValue;
+    
   }
   
-  get(configName) {
-    return this.configName.value
+  get(configName: string) {
+    return this.settings[configName].value
   }
 }
 
