@@ -4,13 +4,13 @@ import SyncStore, { SyncManager } from "./sync-manager";
 
 interface SyncServerEvents {
   sync_create: (keyword: string, key: string, value: unknown) => void
-  sync_update: (keyword: string) => void
+  sync_update: (keyword: string, value: unknown, ...keys: string[]) => void
   sync_delete: (keyword: string, key: string) => void
   sync_set: (keyword: string, data: {[key: string]: unknown}) => void
 }
 
 type Socket = SocketType<any, SyncServerEvents>;
-type Server = BaseServer | RoomServer;
+type Server = Namespace<any, SyncServerEvents>
 
 const clone = require("lodash.clonedeep");
 
@@ -35,32 +35,15 @@ class SyncHost<V> extends Base {
     this.unsubscribeSocket = new Map();
     
     //Add the syncHost to its SyncManager
+    manager.addHost(this)
   }
 
-  route(
-    callback: (...args: any[]) => void
-  ): (keyword: string, ...args: any[]) => void {
-    return (keyword: string, ...args) => {
+  route(callback: (...args: any[]) => void): (keyword: string, ...args: any[]) => void {
+    return (keyword: string, ...args: any[]) => {
       if (this.keyword === keyword) {
         callback(...args);
       }
     };
-  }
-
-  connect(socket: Socket) {
-    const { keyword } = this;
-
-    const subscribeSocket = this.route(
-      (ack: (arg0: { [key: string]: V }) => void) => this.subscribe(socket, ack)
-    );
-    const unsubscribeSocket = this.route(() => this.unsubscribe(socket));
-
-    this.subscribeSocket.set(socket, subscribeSocket);
-    this.unsubscribeSocket.set(socket, unsubscribeSocket);
-
-    socket.on("sync_subscribe");
-
-    this.sockets.add(socket);
   }
 
   create(key: string, value: V) {
@@ -82,7 +65,7 @@ class SyncHost<V> extends Base {
       );
 
       obj[prop] = value;
-      io.to(keyword).emit(`sync_update`, keyword, ...path, prop, value);
+      io.to(keyword).emit(`sync_update`, keyword, value, ...path);
     } catch {
       console.error(`Error in update sync with args ${path}`);
     }

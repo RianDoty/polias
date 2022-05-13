@@ -24,7 +24,7 @@ export interface RoomTemplate {
 
 //Class to manage data storage for a room, which hosts games
 class Room extends Base {
-  io!: Server
+  io!: Namespace
   users: UserManager
   cardManager: CardManager
   chatManager: ChatRoomManager
@@ -39,14 +39,13 @@ class Room extends Base {
 
   constructor(manager: RoomManager, { code, name, password } : RoomData) {
     super(manager.io)
-    if (this.io instanceof Namespace) throw 'Namespace provided instead of server!'
 
     this.code = code
     this.name = name
     this.manager = manager
     this.password = password
 
-    const ioNamespace = this.io.of(`/${this.code}`);
+    const ioNamespace = this.io.server.of(`/${this.code}`);
     this.ioNamespace = ioNamespace
 
     //Password Authentication

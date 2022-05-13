@@ -1,11 +1,14 @@
 import Base from "./base";
-import type { Server } from 'socket.io'
+import type { Namespace, Socket as SocketType } from 'socket.io'
 import type SyncHost from "./sync";
 
 interface SyncClientEvents {
   sync_subscribe: (keyword: string) => void;
   sync_unsubscribe: (keyword: string) => void
 }
+
+type Server = Namespace<SyncClientEvents, any>
+type Socket = SocketType<SyncClientEvents, any>
 
 export class SyncManagerStore {
   managers: Map<Server, SyncManager>;
@@ -15,9 +18,9 @@ export class SyncManagerStore {
   }
 
   getManager(io: Server) {
-    let syncHosts = this.servers.get(io);
+    let syncHosts = this.managers.get(io);
     if (!syncHosts) {
-      syncHosts = new Map<string, SyncHost<unknown>>();
+      syncHosts = new SyncManager();
       this.managers.set(io, syncHosts);
     }
 
@@ -26,18 +29,18 @@ export class SyncManagerStore {
 
   getHost(io: Server, keyword: string) {
     const hosts = this.getManager(io);
-    return hosts.get(keyword);
+    return hosts.getHost(keyword);
   }
 }
 
-class SyncManager {
-  hosts: Map<string, SyncHost>
+export class SyncManager {
+  hosts: Map<string, SyncHost<unknown>>
   
   constructor() {
     this.hosts = new Map()
   }
   
-  getHost(keyword) {
+  getHost(keyword: string) {
     return this.hosts.get(keyword)
   }
   
@@ -51,6 +54,9 @@ class SyncManager {
 
   subscribeSocket(socket: Socket, keyword: string, ack: (arg0: unknown) => void) {
     const host = this.getHost(keyword)
+    if (!host) throw `Attempt to subscribe to nonexistent host: ${keyword}`
+
+    host.subscribe(socket, ack)
   }
 }
 
