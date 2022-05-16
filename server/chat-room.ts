@@ -16,8 +16,9 @@ class ChatRoom extends Base {
   sync!: SyncHost<ChatMessage>
   sockets!: Set<RoomSocket>
   callbacks!: Map<RoomSocket, CallbacksList>
+  keyword!: string
 
-  constructor(manager: ChatRoomManager, roomCode: string, chatKeyword: string) {
+  constructor(manager: ChatRoomManager, chatKeyword: string) {
     super(manager.io)
     const keyword = `room chat ${chatKeyword}`;
 

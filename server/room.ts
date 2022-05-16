@@ -5,7 +5,7 @@ import Config from './config'
 import RoomSyncManager from './room-sync-manager'
 import UserManager from './user-manager'
 import Base from './base'
-import type { RoomManager } from './room-manager'
+import type RoomManager from './room-manager'
 import { Namespace, Server, Socket } from 'socket.io'
 
 export interface RoomData {
@@ -64,7 +64,7 @@ class Room extends Base {
     this.users = new UserManager(this)
 
     this.chatManager = new ChatRoomManager(this);
-    this.chatManager.generateChatRooms();
+    this.chatManager.createRooms();
 
     this.cardManager = new CardManager(this)
 

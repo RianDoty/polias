@@ -1,14 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useVolatileState from "./volatile-state";
 import useSocketCallbacks from "./socket-callbacks";
 import useSocket from '../contexts/socket';
 
-const useSync = (keyword, def=({}), log=false) => {
+const useSync = (keyword, def=({}), log=false): [boolean, Object, Function] => {
   const socket = useSocket()
+  const [loading, setLoading] = useState(true);
   const [store, setStore] = useVolatileState(def);
 
   useEffect(() => {
-    socket.emit(`sync subscribe ${keyword}`, s => setStore(def => {
+    socket.emit(`sync_subscribe ${keyword}`, s => setStore(def => {
       //Prune out elements that were already defined by the client
       //Prevents 'refreshing' info that the client should know already,
       //because the info is likely sourced from themselves.
@@ -17,6 +18,7 @@ const useSync = (keyword, def=({}), log=false) => {
       })
 
       console.log(`${keyword} recieved:`, s);
+      setLoading(false)
       return s;
     }));
     return () => socket.emit(`sync unsubscribe ${keyword}`);
@@ -62,7 +64,7 @@ const useSync = (keyword, def=({}), log=false) => {
     }
   });
 
-  return [store, setStore];
+  return [loading, store, setStore];
 };
 
 export default useSync;

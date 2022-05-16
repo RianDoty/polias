@@ -1,3 +1,4 @@
+'use strict'
 import React from "react";
 import { useState, useContext } from "react";
 import { useLocation, Link } from "wouter";
@@ -101,7 +102,7 @@ const RoomCreator = () => {
 
     console.log("submitted");
     //Tell the server to create a room with the given name
-    socket.emit("room_create", name);
+    socket.emit("room_create", {name});
   };
 
   let errComponent;
@@ -126,7 +127,17 @@ const RoomCreator = () => {
 
 //Displays a list of every ongoing room
 const RoomList = () => {
-  const [rooms] = useSync("rooms");
+  const [loading, rooms] = useSync("rooms");
+
+  if (loading) {
+    return (
+      <div className='dashboard-list'>
+        <span className="muted">
+          Loading...
+        </span>
+      </div>
+    )
+  }
 
   const e = Object.entries(rooms).map(([i, r]) => (
     <div key={i}>
@@ -163,9 +174,9 @@ export default function Home() {
   const [, setLocation] = useLocation()
   
   useSocketCallbacks({
-    connect: () => {setConnected(true); console.log('conn')},
+    connect: () => {setConnected(true); console.log('Base socket connected successfully.')},
     disconnect: () => setConnected(false),
-    connect_error: (e) => {setConnected(false); console.log('err', e.message)},
+    connect_error: (e) => {setConnected(false); console.log('Connection Error:', e.message)},
     room_send: (code) => setLocation(`/game/${code}`)
   })
   

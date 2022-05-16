@@ -1,26 +1,32 @@
 import type Room from "./room";
 
 //Manages chat rooms
-const ChatRoom = require("./chat-room");
-const BaseManager = require('./base-manager')
+import ChatRoom from "./chat-room";
+import BaseManager from './base-manager';
 
 class ChatRoomManager extends BaseManager {
+  chatRooms: Map<string, ChatRoom>
+
   constructor(room: Room) {
     super(room)
     
-    this.rooms = new Map();
+    this.chatRooms = new Map();
   }
   
   hasRoom(keyword: string) {
-    return this.rooms.has(keyword)
+    return this.chatRooms.has(keyword)
   }
   
   findRoom(keyword: string) {
-    return this.rooms.get(keyword)
+    return this.chatRooms.get(keyword)
   }
 
   createRoom(keyword: string) {
-    this.rooms.set(keyword, new ChatRoom(this.io, keyword));
+    this.chatRooms.set(keyword, new ChatRoom(this, keyword));
+  }
+
+  createRooms() {
+    
   }
 }
 
