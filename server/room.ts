@@ -82,6 +82,7 @@ class Room extends Base {
     ioNamespace.on('connection', this.onConnection.bind(this))
 
     this.syncManager = new RoomSyncManager(this)
+    this.syncManager.updateList()
   }
 
   onConnection(socket: RoomSocket) {
