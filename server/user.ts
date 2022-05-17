@@ -22,10 +22,8 @@ class User extends BaseRoomStructure {
   room!: Room;
   role!: string;
 
-  constructor(room: Room, { userID, name = "Unknown" }: { userID: string, name: string }) {
+  constructor(room: Room, { userID = uuidv4(), name = "Unknown" }: { userID?: string, name: string }) {
     super(room);
-
-    if (!userID) userID = uuidv4();
 
     Object.assign(this, {
       name,

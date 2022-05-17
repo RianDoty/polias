@@ -1,8 +1,11 @@
+import type { Socket } from 'socket.io-client'
 import { useEffect } from 'react';
+import socket from '../socket'
+
+export type CallbacksTable<Callbacks> = {[key in keyof Callbacks]: (...args: any[]) => void;};
 
 //Connects a list of functions to the socket
-//Functions in {eventName: func} format
-export default (socket, callbackData) => {
+export default function useSocketCallbacks<Callbacks>(socket: Socket<Callbacks>, callbackData: CallbacksTable<Callbacks>) {
   
   useEffect(()=>{
     if (!socket || !callbackData) return;

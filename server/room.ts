@@ -7,6 +7,7 @@ import UserManager from './user-manager'
 import Base from './base'
 import type RoomManager from './room-manager'
 import { Namespace, Server, Socket } from 'socket.io'
+import { RoomSocket } from './room-socket-types'
 
 export interface RoomData {
   code: string
@@ -49,7 +50,7 @@ class Room extends Base {
     this.ioNamespace = ioNamespace
 
     //Password Authentication
-    ioNamespace.use((socket: Socket, next: (err?: Error) => void) => {
+    ioNamespace.use((socket: RoomSocket, next: (err?: Error) => void) => {
       const { password } = socket.handshake.auth;
 
       if (this.password) {
@@ -78,27 +79,23 @@ class Room extends Base {
     });
 
     this.onConnection = this.onConnection.bind(this);
-    ioNamespace.on('connection', this.onConnection)
+    ioNamespace.on('connection', this.onConnection.bind(this))
 
     this.syncManager = new RoomSyncManager(this)
   }
 
-  onConnection(socket: Socket) {
+  onConnection(socket: RoomSocket) {
     // socket.join(socket.userID);
 
-    // // Find/create user
-    // const user = this.findUser(socket.userID)
-    // if (!user) {
-    //   user = User.create(socket)
-
-    //   this.onUserJoin(user)
-    // }
+    this.users.onConnection(socket)
 
     // socket.user = user;
+
+
     socket.on('disconnect', () => this.onDisconnect(socket))
   }
 
-  async onDisconnect(socket: Socket) {
+  async onDisconnect(socket: RoomSocket) {
     // const noSocketsControlling = (await this.ioNamespace.in(socket.userID).allSockets()).size === 0;
 
     // if (noSocketsControlling) {

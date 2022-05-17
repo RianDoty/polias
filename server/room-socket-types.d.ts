@@ -1,12 +1,14 @@
 import { Namespace, Socket } from 'socket.io'
 import { ChatRoomEvents } from './chat-room'
 import { SyncClientEvents, SyncServerEvents } from './sync'
+import User from './user'
 
 interface ServerToClientEvents {
     sync_create: (keyword: string, key: string, value: unknown) => void
     sync_update: (keyword: string, value: unknown, ...keys: string[]) => void
     sync_delete: (keyword: string, key: string) => void
     sync_set: (keyword: string, data: { [key: string]: unknown }) => void
+    session: (sessionID: string) => void
     room_chat: () => void
 }
 interface ClientToServerEvents {
@@ -18,7 +20,7 @@ interface InterServerEvents {
 
 }
 interface SocketData {
-    user: {}
+    user: User
 }
 
 export type RoomServer = Namespace<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
