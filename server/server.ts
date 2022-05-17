@@ -22,7 +22,7 @@ nsp.on("connection", (socket: MySocket) => {
   console.log('connection')
 
   socket.onAny((name: string, ...args: any[]) => {
-    console.log(`event ${name}: ${args}`)
+    console.log(`[S] ${name}: ${args}`)
   })
 
   //Username
@@ -31,11 +31,10 @@ nsp.on("connection", (socket: MySocket) => {
   })
 
   //Events
-  socket.on('sync_subscribe', (keyword, ack) => {
-    console.log(`subscribe: ${keyword}`)
+  socket.on('sync_subscribe', (keyword) => {
     const host = MySyncManager.getHost(keyword)
 
-    if (host) host.subscribe(socket, ack);
+    if (host) host.subscribe(socket);
     else console.warn(`attempt to unsubscribe to nonexistent host: ${keyword}`)
   })
   

@@ -56,7 +56,7 @@ export class SyncManager {
     const host = this.getHost(keyword)
     if (!host) throw `Attempt to subscribe to nonexistent host: ${keyword}`
 
-    host.subscribe(socket, ack)
+    host.subscribe(socket)
   }
 }
 

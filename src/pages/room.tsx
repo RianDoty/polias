@@ -1,4 +1,5 @@
-import React from "react";
+import React, {useRef} from "react";
+import io from 'socket.io-client'
 
 //Game-related stuff
 import useRoom from "../hooks/room";
@@ -13,10 +14,11 @@ import NameEntryScreen from "../components/game/name-entry-screen";
 
 //Style
 import "../styles/game.css";
-import { RouteComponentProps } from "wouter";
+import type { RouteComponentProps } from "wouter";
 
 export default function RoomMain({ params: { code } }: RouteComponentProps<{code: string}>) {
   const { cardPack } = useRoom(code);
+  const { current: socket } = useRef(io(`/${code}`))
 
   return (
     <RoomContext.Provider value={code}>

@@ -6,7 +6,7 @@ interface SyncServerEvents {
   sync_create: (keyword: string, key: string, value: unknown) => void
   sync_update: (keyword: string, value: unknown, ...keys: string[]) => void
   sync_delete: (keyword: string, key: string) => void
-  sync_set: (keyword: string, data: {[key: string]: unknown}) => void
+  sync_data: (keyword: string, data: { [key: string]: unknown }) => void
 }
 
 type Socket = SocketType<any, SyncServerEvents>;
@@ -82,12 +82,12 @@ class SyncHost<V> extends Base {
   set(data: { [key: string]: V }) {
     const { io, keyword } = this;
     this.data = clone(data);
-    io.to(keyword).emit(`sync_set`, keyword, data);
+    io.to(keyword).emit(`sync_data`, keyword, data);
   }
 
-  subscribe(socket: Socket, ack: (arg0: { [key: string]: V }) => void) {
+  subscribe(socket: Socket) {
     //Return the current value to the client as the initial value
-    if (ack) ack(this.data);
+    socket.emit('sync_data', this.keyword, this.data)
     //The client is sent further changes
     socket.join(this.keyword);
   }
