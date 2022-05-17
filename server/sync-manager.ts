@@ -1,4 +1,4 @@
-import Base from "./base";
+ import Base from "./base";
 import type { Namespace, Socket as SocketType } from 'socket.io'
 import type SyncHost from "./sync";
 

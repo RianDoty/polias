@@ -42,7 +42,7 @@ export default class RoomSyncManager extends BaseManager {
         this.stateSync.update(key, value)
     }
 
-    updateList(key: string, value: any) {
-        this.listSync.update(key, value)
+    updateList() {
+        this.listSync.update(this.code, this.room.template())
     }
 }

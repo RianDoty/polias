@@ -19,7 +19,7 @@ class User extends BaseRoomStructure {
   userID!: string;
   ready!: boolean;
   inGame!: false;
-  room!: Room;
+  readonly room!: Room;
   role!: string;
 
   constructor(room: Room, { userID = uuidv4(), name = "Unknown" }: { userID?: string, name: string }) {
@@ -30,7 +30,6 @@ class User extends BaseRoomStructure {
       userID,
       ready: false,
       inGame: false,
-      room,
       role: "Chillin'",
     })
   }
