@@ -7,28 +7,51 @@ import path from "path";
 const app = express();
 const http = require("http").Server(app);
 import { Server } from 'socket.io'
+import RoomManager from "./room-manager";
+import { randomCode } from "./random-code";
+import SyncManagerStore from "./sync-manager";
 
-const io: MyServer = new Server(http);
+const io = new Server(http);
+const nsp: MyServer = io.of('/')
 
-const RoomManager = require("./room-manager")(io);
- 
-io.on("connection", (socket: MySocket) => {
+const MyRoomManager = new RoomManager(nsp)
+const MySyncManager = SyncManagerStore.getManager(nsp)
+
+nsp.on("connection", (socket: MySocket) => {
+  //Debug
   console.log('connection')
+
+  socket.onAny((name: string, ...args: any[]) => {
+    console.log(`[S] ${name}: ${args}`)
+  })
+
+  //Username
   socket.on('username', (username: string) => {
     socket.data.username = username
+  })
+
+  //Events
+  socket.on('sync_subscribe', (keyword) => {
+    const host = MySyncManager.getHost(keyword)
+
+    if (host) host.subscribe(socket);
+    else console.warn(`attempt to unsubscribe to nonexistent host: ${keyword}`)
   })
   
   socket.on("room_create", (roomData: RoomData) => {
     try {
       console.log("creating a room...");
+      if (roomData === undefined || typeof(roomData) !== "object") throw 'Invalid RoomData'
       if (!socket.data.username) throw 'Invalid username';
       
       Object.assign(roomData, {
-        host: socket
+        host: socket,
+        code: randomCode(4)
       })
       
-      const { code } = RoomManager.createRoom(roomData);
-      socket.emit("room_send", code);
+      const room = MyRoomManager.createRoom(roomData);
+      console.log(room)
+      socket.emit("room_send", room.code);
     } catch (err) {
       console.error("error when creating room");
       console.error(err);

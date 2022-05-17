@@ -4,9 +4,9 @@ import { SyncClientEvents, SyncServerEvents } from './sync'
 
 interface ServerToClientEvents {
     sync_create: (keyword: string, key: string, value: unknown) => void
-    sync_update: (keyword: string) => void
+    sync_update: (keyword: string, value: unknown, ...keys: string[]) => void
     sync_delete: (keyword: string, key: string) => void
-    sync_set: (keyword: string, data: {[key: string]: unknown}) => void
+    sync_set: (keyword: string, data: { [key: string]: unknown }) => void
     room_chat: () => void
 }
 interface ClientToServerEvents {

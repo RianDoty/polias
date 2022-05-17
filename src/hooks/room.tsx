@@ -4,7 +4,7 @@ import useSync from './sync';
 import socket from '../socket'
 
 export default function useRoom(code) {
-  const [roomState] = useSync(`room state ${code}`)
+  const [roomState] = useSync(socket, `room state ${code}`)
   
   useEffect(()=>{
     socket.emit('join room', code);

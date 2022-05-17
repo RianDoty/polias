@@ -1,68 +1,70 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useVolatileState from "./volatile-state";
 import useSocketCallbacks from "./socket-callbacks";
-import useSocket from '../contexts/socket';
+import useSocket from "../contexts/socket";
 
-const useSync = (keyword, def=({}), log=false) => {
-  const socket = useSocket()
+const useSync = (
+  socket,
+  keyword,
+  def = {},
+  log = false
+): [boolean, Object, Function] => {
+  const [loading, setLoading] = useState(true);
   const [store, setStore] = useVolatileState(def);
 
   useEffect(() => {
-    socket.emit(`sync subscribe ${keyword}`, s => setStore(def => {
-      //Prune out elements that were already defined by the client
-      //Prevents 'refreshing' info that the client should know already,
-      //because the info is likely sourced from themselves.
-      Object.keys(def).forEach(key => {
-        delete s[key];
-      })
-
-      console.log(`${keyword} recieved:`, s);
-      return s;
-    }));
-    return () => socket.emit(`sync unsubscribe ${keyword}`);
+    socket.emit("sync_subscribe", keyword)
+    return () => socket.emit("sync_unsubscribe", keyword);
   }, [keyword]);
 
-  useSocketCallbacks({
-    [`sync create ${keyword}`]: (key, value) => {
-      setStore(store => {
-        if (log) console.log(`${keyword} to create k: ${key.substring(0,7)} v:`,value)
-        store[key] = value;
-        return store;
-      });
-    },
-    [`sync update ${keyword}`]: (key, prop, value) => {
-      console.log('sync recieved:',key,prop,value)
-      setStore(store => {
-        if (value === undefined) {
-          //depth 1 update
-          value = prop;
-          
-          if (store[key] === value) return store;
-          if (log) console.log(`${keyword} to update k: ${key.substring(0,7)} v: ${value}`)
-          store[key] = value;
-          return store
-        }
+  const route =
+    (callback) =>
+    (kw, ...args) => {
+      if (kw === keyword) callback(...args);
+    };
 
-        //depth 2 update
-        if (!store[key]) return store;
-        if (store[key][prop] === value) return store;
-        if (log) console.log(`${keyword} to update k: ${key.substring(0,7)} p: ${prop} v: ${value}`)
-        store[key][prop] = value
-        
-        if (log) console.log('new state:', store)
-        return store
-      })
-    },
-    [`sync delete ${keyword}`]: key => {
-      setStore(store => {
-        if (log) console.log(`${keyword} to delete k: ${key.substring(0,7)}`)
-        delete store[key];
-        return store;
-      })
-    }
+  const onData = route((data) => {
+    setStore(data)
+    setLoading(false)
+  })
+  
+  const onCreate = route((key, value) => {
+    setStore((store) => {
+      if (log)
+        console.log(`${keyword} to create k: ${key.slice(0, 7)} v:`, value);
+      store[key] = value;
+      return store;
+    });
   });
 
-  return [store, setStore];
+  const onUpdate = route((value, ...props) => {
+    setStore((store) => {
+      if (log) console.log(`${keyword} to update k: ${props} value: ${value}`);
+      const lastProp = props.pop();
+      const lastObject = props.reduce((st, prop) => st[prop], store);
+
+      lastObject[lastProp] = value;
+
+      return store;
+    });
+  });
+
+  const onDelete = route((key) => {
+    setStore((store) => {
+      if (log) console.log(`${keyword} to delete k: ${key.slice(0, 7)}`);
+      delete store[key];
+      return store;
+    });
+  });
+
+  useSocketCallbacks(socket, {
+    sync_data: onData,
+    sync_create: onCreate,
+    sync_update: onUpdate,
+    sync_delete: onDelete,
+  });
+
+  return [loading, store, setStore];
 };
 
 export default useSync;

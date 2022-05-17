@@ -3,6 +3,6 @@
     "compilerOptions": {
       "outDir": "dist"
     },
-    "include": ["server"],
+    "include": ["server", "src/room-socket-types.d.ts", "src/socket-types.d.ts"],
     "exclude": ["node_modules", "src"]
   }

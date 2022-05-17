@@ -21,6 +21,7 @@ class RoomManager extends Base {
 
   createRoom(roomData: RoomData) {
     const { code } = roomData;
+    if (!roomData.code) throw 'Room cannot be created without a code!'
     const { syncHost } = this;
     
     const newRoom = new Room(this, roomData);
@@ -46,5 +47,4 @@ class RoomManager extends Base {
   }
 }
 
-export default (io: Server) => new RoomManager(io);
-export type { RoomManager }
+export default RoomManager

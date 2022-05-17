@@ -5,7 +5,7 @@ import Config from './config'
 import RoomSyncManager from './room-sync-manager'
 import UserManager from './user-manager'
 import Base from './base'
-import type { RoomManager } from './room-manager'
+import type RoomManager from './room-manager'
 import { Namespace, Server, Socket } from 'socket.io'
 
 export interface RoomData {
@@ -24,7 +24,7 @@ export interface RoomTemplate {
 
 //Class to manage data storage for a room, which hosts games
 class Room extends Base {
-  io!: Server
+  io!: Namespace
   users: UserManager
   cardManager: CardManager
   chatManager: ChatRoomManager
@@ -39,14 +39,13 @@ class Room extends Base {
 
   constructor(manager: RoomManager, { code, name, password } : RoomData) {
     super(manager.io)
-    if (this.io instanceof Namespace) throw 'Namespace provided instead of server!'
 
     this.code = code
     this.name = name
     this.manager = manager
     this.password = password
 
-    const ioNamespace = this.io.of(`/${this.code}`);
+    const ioNamespace = this.io.server.of(`/${this.code}`);
     this.ioNamespace = ioNamespace
 
     //Password Authentication
@@ -65,7 +64,7 @@ class Room extends Base {
     this.users = new UserManager(this)
 
     this.chatManager = new ChatRoomManager(this);
-    this.chatManager.generateChatRooms();
+    this.chatManager.createRooms();
 
     this.cardManager = new CardManager(this)
 

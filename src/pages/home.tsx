@@ -1,3 +1,4 @@
+'use strict'
 import React from "react";
 import { useState, useContext } from "react";
 import { useLocation, Link } from "wouter";
@@ -7,7 +8,7 @@ import useUsername from "../contexts/username";
 
 import "../styles/home.css";
 
-import useSocket from "../contexts/socket";
+import socket from '../socket'
 import useSocketCallbacks from '../hooks/socket-callbacks'
 
 //Components
@@ -34,7 +35,6 @@ const Error = ({ children }) => <span className="error">{children}</span>;
 
 //Displays a form for the user to enter their name
 const NameEntry = ({ setUsername }) => {
-  const socket = useSocket()
   const [inpVal, updateInpVal] = useState("");
   const [err, setErr] = useState("");
   
@@ -86,7 +86,6 @@ const NameEntry = ({ setUsername }) => {
 
 //Displays a form for naming and creating a room
 const RoomCreator = () => {
-  const socket = useSocket()
   const [err, setErr] = useState('');
   const [name, setName] = useState("");
   const [username] = useUsername();
@@ -101,7 +100,7 @@ const RoomCreator = () => {
 
     console.log("submitted");
     //Tell the server to create a room with the given name
-    socket.emit("room_create", name);
+    socket.emit("room_create", {name});
   };
 
   let errComponent;
@@ -126,8 +125,18 @@ const RoomCreator = () => {
 
 //Displays a list of every ongoing room
 const RoomList = () => {
-  const [rooms] = useSync("rooms");
+  const [loading, rooms] = useSync(socket, "rooms");
 
+  if (loading) {
+    return (
+      <div className='dashboard-list'>
+        <span className="muted">
+          Loading...
+        </span>
+      </div>
+    )
+  }
+  console.log(rooms)
   const e = Object.entries(rooms).map(([i, r]) => (
     <div key={i}>
       <RoomEntry room={r} />
@@ -145,6 +154,7 @@ const RoomEntry = ({ room }) => {
       <div className="muted">
         Hosted by {hostName}{"  "}
         <span className="p-4px">
+          {/*Player Count*/}
           <strong>
             {pCount}
             <span className="f-80"> OF </span>
@@ -162,16 +172,16 @@ export default function Home() {
   const [connected, setConnected] = useState(false)
   const [, setLocation] = useLocation()
   
-  useSocketCallbacks({
-    connect: () => {setConnected(true); console.log('conn')},
+  useSocketCallbacks(socket, {
+    connect: () => {setConnected(true); console.log('Base socket connected successfully.')},
     disconnect: () => setConnected(false),
-    connect_error: (e) => {setConnected(false); console.log('err', e.message)},
+    connect_error: (e) => {setConnected(false); console.log('Connection Error:', e.message)},
     room_send: (code) => setLocation(`/game/${code}`)
   })
   
   
   let middleSection;
-  if (connected) {
+  if (connected && username) {
     middleSection = (
       <Section>
         <Cell wClass="w-3-5" header="Current Games">
