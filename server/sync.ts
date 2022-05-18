@@ -15,6 +15,7 @@ type Server = Namespace<any, SyncServerEvents>
 const clone = require("lodash.clonedeep");
 
 class SyncHost<V> extends Base {
+  io!: Server
   keyword: string;
   data: { [key: string]: V };
   sockets: Set<Socket>;

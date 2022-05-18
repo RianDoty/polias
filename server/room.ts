@@ -8,12 +8,18 @@ import Base from './base'
 import type RoomManager from './room-manager'
 import { Namespace, Server, Socket } from 'socket.io'
 import { RoomSocket } from './room-socket-types'
+import { randomCode } from './random-code'
 
 export interface RoomData {
   code: string
   name: string
-  host: Socket
+  host?: Socket
   password?: string
+}
+
+export interface RoomParameters {
+  name: string;
+  password?: string;
 }
 
 export interface RoomTemplate {
@@ -86,13 +92,7 @@ class Room extends Base {
   }
 
   onConnection(socket: RoomSocket) {
-    // socket.join(socket.userID);
-
     this.users.onConnection(socket)
-
-    // socket.user = user;
-
-
     socket.on('disconnect', () => this.onDisconnect(socket))
   }
 

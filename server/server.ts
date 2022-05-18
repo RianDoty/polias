@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import type { Server as MyServer, Socket as MySocket } from "./socket-types";
-import type { RoomData } from "./room";
+import type { RoomData, RoomParameters } from "./room";
 
 import express from "express";
 import path from "path";
@@ -21,6 +21,7 @@ nsp.on("connection", (socket: MySocket) => {
   //Debug
   console.log('connection')
 
+
   socket.onAny((name: string, ...args: any[]) => {
     console.log(`[S] ${name}: ${args}`)
   })
@@ -38,13 +39,13 @@ nsp.on("connection", (socket: MySocket) => {
     else console.warn(`attempt to unsubscribe to nonexistent host: ${keyword}`)
   })
   
-  socket.on("room_create", (roomData: RoomData) => {
+  socket.on("room_create", (roomParams: RoomParameters) => {
     try {
       console.log("creating a room...");
-      if (roomData === undefined || typeof(roomData) !== "object") throw 'Invalid RoomData'
+      if (roomParams === undefined || typeof(roomParams) !== "object") throw 'Invalid RoomData'
       if (!socket.data.username) throw 'Invalid username';
       
-      Object.assign(roomData, {
+      const roomData: RoomData = Object.assign(roomParams, {
         host: socket,
         code: randomCode(4)
       })

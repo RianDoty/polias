@@ -38,7 +38,11 @@ export default class UserManager extends BaseManager {
     }
 
     onConnection(socket: RoomSocket) {
+        const { user } = socket.data;
+        if (!user) throw 'Socket should have a User before being registered by the UserManager!'
+
         socket.emit('session', socket.handshake.auth.sessionID || uuid())
+        socket.join(user.userID)
     }
 
     get userCount(): number {

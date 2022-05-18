@@ -22,11 +22,9 @@ class RoomManager extends Base {
   createRoom(roomData: RoomData) {
     const { code } = roomData;
     if (!roomData.code) throw 'Room cannot be created without a code!'
-    const { syncHost } = this;
     
     const newRoom = new Room(this, roomData);
     this.rooms.set(code, newRoom)
-    syncHost.create(code, newRoom.template());
     
     return newRoom
   }
