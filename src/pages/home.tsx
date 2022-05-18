@@ -166,6 +166,7 @@ const RoomEntry = ({ room }) => {
   );
 };
 
+socket.on('connect', () => {})
 //Page
 export default function Home() {
   const [username, setUsername] = useUsername();

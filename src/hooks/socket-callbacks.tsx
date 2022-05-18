@@ -1,11 +1,16 @@
 import { Socket } from 'socket.io-client'
 import { useEffect } from 'react';
-import socket from '../socket'
-import { SocketReservedEventsMap } from 'socket.io/dist/socket';
-import { ReservedOrUserEventNames, ReservedOrUserListener } from 'socket.io/dist/typed-events';
+import socket from '../socket';
 
+interface SocketReservedEvents {
+  connect: () => void;
+  connect_error: (err: Error) => void;
+  disconnect: (reason: Socket.DisconnectReason) => void;
+}
 
-export type EventsTable<Events> = {[key in ReservedOrUserEventNames<SocketReservedEventsMap, Events>]?: ReservedOrUserListener<SocketReservedEventsMap, Events, key>};
+type IndexEither<a,b,key> = key extends keyof a ? a[key] : key extends keyof b ? b[key] : never
+
+export type EventsTable<Events> = {[key in keyof SocketReservedEvents | keyof Events]?: IndexEither<SocketReservedEvents, Events, key>};
 
 //Connects a list of functions to the socket
 export default function useSocketCallbacks<Events>(socket: Socket<Events>, callbackData: EventsTable<Events>) {
@@ -22,3 +27,5 @@ export default function useSocketCallbacks<Events>(socket: Socket<Events>, callb
     return disconnect;
   },[callbackData])
 }
+
+useSocketCallbacks(socket, {disconnect: (reason) => {}})
