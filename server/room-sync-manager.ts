@@ -5,11 +5,14 @@ import type Room from "./room"
 import type { RoomTemplate } from "./room"
 import type { UserTemplate } from "./user"
 import type User from "./user"
+import SyncManagerStore, { SyncManager } from "./sync-manager"
+import { RoomSocket } from "./room-socket-types"
 
 export default class RoomSyncManager extends BaseManager {
     usersSync!: SyncHost<UserTemplate>
     stateSync!: SyncHost<any>
     listSync!: SyncHost<RoomTemplate>
+    syncManager: SyncManager
 
     constructor(room: Room) {
         super(room)
@@ -17,12 +20,25 @@ export default class RoomSyncManager extends BaseManager {
         const { io, code } = this;
 
         Object.assign(this, {
-            usersSync: new SyncHost(io, `room users ${code}`, {}),
-            stateSync: new SyncHost(io, `room state ${code}`, {
+            usersSync: new SyncHost(io, 'room_users', {}),
+            stateSync: new SyncHost(io, 'room_state', {
                 state: 'lobby',
                 cardPack: 'fruits'
             }),
             listSync: room.manager.syncHost
+        })
+
+        //SyncManager
+        this.syncManager = SyncManagerStore.getManager(io)
+    }
+
+    onConnect(socket: RoomSocket) {
+        socket.on('sync_subscribe', keyword => {
+            this.syncManager.subscribeSocket(socket, keyword)
+        })
+
+        socket.on('sync_unsubscribe', keyword => {
+            this.syncManager.unsubscribeSocket(socket, keyword)
         })
     }
 
