@@ -27,6 +27,8 @@ export interface RoomTemplate {
   code: string
   hostName?: string
   password?: string
+  pCount: number
+  pMax: number
 }
 
 //Class to manage data storage for a room, which hosts games
@@ -110,13 +112,14 @@ class Room extends Base {
     return {
       name,
       code,
-      hostName: host? host.name : undefined
+      hostName: host? host.name : undefined,
+      pCount: this.userCount,
+      pMax: 999
     }
   }
 
   onUserJoin(user: User) {
-    
-
+    if (!this.users.userCount) this.setHost(user)
   }
 
   onUserLeave(user: User) {
@@ -179,12 +182,9 @@ class Room extends Base {
     return false //TODO: Check for this
   }
 
-  assignHost(socket: Socket) {
-    // if (!socket || !socket.user) return console.warn('attempt to make invalid socket host!');
-    // this.host = socket;
-    // const { user } = socket;
-    // this.usersSync.update(user.id, 'host', true);
-    // user.setHost(true);
+  setHost(user: User) {
+    this.host = user
+    this.syncManager.updateList()
   }
 
   destroy() {

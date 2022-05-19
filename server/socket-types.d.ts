@@ -1,5 +1,5 @@
 import type { Socket } from "socket.io";
-import type{ RoomData } from "./room";
+import type{ RoomData, RoomParameters } from "./room";
 import type { Namespace } from 'socket.io';
 import type { SyncManager } from "./sync-manager";
 import { ChatRoomEvents } from "./chat-room";
@@ -17,7 +17,7 @@ export interface ServerToClientEvents {
 }
 export interface ClientToServerEvents {
   username: (username: string) => void;
-  room_create: (roomData: RoomData) => void;
+  room_create: (roomData: RoomParameters) => void;
   log: (...args: any[]) => void;
   sync_subscribe: (keyword: string, ack: (data: {[key:string]: unknown}) => void) => void
   sync_unsubscribe: (keyword: string) => void

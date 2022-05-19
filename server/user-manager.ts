@@ -14,37 +14,48 @@ export default class UserManager extends BaseManager {
         this.users = new Map()
 
         this.io.use((socket, next) => {
+            //Give the socket a user
             const { sessionID } = socket.handshake.auth
 
             if (sessionID) {
-                //Look up an existing user, if not, throw an error
+                //Look up an existing user, if it doesn't exist, throw an error
                 const existingUser = this.users.get(sessionID);
                 if (!existingUser) next(new Error('Invalid SessionID'))
+
                 socket.data.user = existingUser
+                socket.data.sessionID = sessionID
                 return next()
             }
 
-            //Make a new user
+            //Make a new user and session
             const { username } = socket.handshake.auth;
             const newUser = new User(this.room, { name: username })
 
             socket.data.user = newUser
+            socket.data.sessionID = uuid()
             next()
         })
-    }
-
-    findUser(userID: string) {
-        return this.users.get(userID)
     }
 
     onConnection(socket: RoomSocket) {
         const { user } = socket.data;
         if (!user) throw 'Socket should have a User before being registered by the UserManager!'
+        const { userID } = user
 
-        socket.emit('session', socket.handshake.auth.sessionID || uuid())
-        socket.join(user.userID)
+        const { sessionID } = socket.data
+        if (!sessionID) throw 'Socket expected to have a session ID!'
+
+        socket.emit('session', { sessionID, userID })
+        socket.join(userID)
+
+        this.users.set(sessionID, user)
+        this.room.syncManager.addUser(user)
     }
 
+    findUser(userID: string) {
+        return this.users.get(userID)
+    }
+    
     get userCount(): number {
         return this.users.size
     }

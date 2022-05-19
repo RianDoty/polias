@@ -8,7 +8,7 @@ interface ServerToClientEvents {
     sync_update: (keyword: string, value: unknown, ...keys: string[]) => void
     sync_delete: (keyword: string, key: string) => void
     sync_set: (keyword: string, data: { [key: string]: unknown }) => void
-    session: (sessionID: string) => void
+    session: ({sessionID: string, userID: string}) => void
     room_chat: () => void
 }
 interface ClientToServerEvents {
@@ -21,6 +21,7 @@ interface InterServerEvents {
 }
 interface SocketData {
     user: User
+    sessionID: string
 }
 
 export type RoomServer = Namespace<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>

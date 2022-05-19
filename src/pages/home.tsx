@@ -10,6 +10,7 @@ import "../styles/home.css";
 
 import socket from '../socket'
 import useSocketCallbacks from '../hooks/socket-callbacks'
+import { RoomTemplate } from "../../server/room";
 
 //Components
 const Section = ({ children }) => (
@@ -125,7 +126,7 @@ const RoomCreator = () => {
 
 //Displays a list of every ongoing room
 const RoomList = () => {
-  const [loading, rooms] = useSync(socket, "rooms");
+  const [loading, rooms] = useSync(socket, 'rooms');
 
   if (loading) {
     return (
@@ -146,8 +147,9 @@ const RoomList = () => {
   return <div className="dashboard-list">{e}</div>;
 };
 
-const RoomEntry = ({ room }) => {
-  const { code, name, hostName, pCount, pMax } = room;
+const RoomEntry = ({ room }: { room: RoomTemplate }) => {
+  const { code, name, hostName, pCount } = room;
+  const pMax = '∞'
   return (
     <Link href={`/game/${code}`}>
       <strong>{name}</strong>

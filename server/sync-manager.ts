@@ -52,11 +52,18 @@ export class SyncManager {
     this.hosts.set(keyword, host);
   }
 
-  subscribeSocket(socket: Socket, keyword: string, ack: (arg0: unknown) => void) {
+  subscribeSocket(socket: Socket, keyword: string) {
     const host = this.getHost(keyword)
     if (!host) throw `Attempt to subscribe to nonexistent host: ${keyword}`
 
     host.subscribe(socket)
+  }
+
+  unsubscribeSocket(socket: Socket, keyword: string) {
+    const host = this.getHost(keyword)
+    if (!host) return console.warn(`Attempt to unsubscribe to non-existent host: ${keyword}`);
+    
+    host.unsubscribe(socket)
   }
 }
 

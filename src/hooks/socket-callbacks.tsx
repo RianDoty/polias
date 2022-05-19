@@ -27,5 +27,3 @@ export default function useSocketCallbacks<Events>(socket: Socket<Events>, callb
     return disconnect;
   },[callbackData])
 }
-
-useSocketCallbacks(socket, {disconnect: (reason) => {}})

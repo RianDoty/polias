@@ -1,7 +1,8 @@
 import useVolatileState from './volatile-state';
 import useSocketCallbacks from './socket-callbacks'
+import { RoomSocket } from '../socket-types';
 
-const useUser = () => {
+const useUser = (socket: RoomSocket) => {
   const [state, updateState] = useVolatileState({
     name: '',
     cardId: -1,
@@ -10,12 +11,8 @@ const useUser = () => {
     host: false
   })
 
-  useSocketCallbacks({
-    'changed': (diff) => {
-      Object.entries(diff).forEach(([prop, value]) => updateState(user => {
-        user[prop] = value;
-        return user}));
-    }
+  useSocketCallbacks(socket, {
+    
   })
 
   state.update = (prop, value) => updateState(s => {s[prop] = value;return s})

@@ -1,20 +1,18 @@
-import { useEffect, useState } from "react";
+import { EffectCallback, useEffect, useState } from "react";
 import useVolatileState from "./volatile-state";
 import useSocketCallbacks from "./socket-callbacks";
-import useSocket from "../contexts/socket";
+import { Socket } from "socket.io-client";
+import type { SyncKeywords } from "../../server/sync";
 
-const useSync = (
-  socket,
-  keyword,
-  def = {},
-  log = false
-): [boolean, Object, Function] => {
+
+
+export default function useSync<k extends keyof SyncKeywords>(socket: Socket, keyword: k, def = {}, log = false): [boolean, {[key: string]: SyncKeywords[k]}, Function] {
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useVolatileState(def);
 
   useEffect(() => {
     socket.emit("sync_subscribe", keyword)
-    return () => socket.emit("sync_unsubscribe", keyword);
+    return () => void socket.emit("sync_unsubscribe", keyword);
   }, [keyword]);
 
   const route =
@@ -66,5 +64,3 @@ const useSync = (
 
   return [loading, store, setStore];
 };
-
-export default useSync;
