@@ -1,6 +1,6 @@
 import { Namespace, Socket } from 'socket.io'
 import { ChatRoomEvents } from './chat-room'
-import { SyncClientEvents, SyncServerEvents } from './sync'
+import { SyncClientEvents, SyncServerEvents } from './list-sync'
 import User from './user'
 
 interface ServerToClientEvents {
