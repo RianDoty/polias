@@ -22,76 +22,46 @@ type Server = Namespace<any, ListSyncServerEvents>
 
 const clone = require("lodash.clonedeep");
 
-class ListSyncHost<V> extends Base {
-  io!: Server
-  keyword: keyof ListSyncKeywords;
-  data: { [key: string]: V };
-  sockets: Set<Socket>;
-  subscribeSocket: Map<
-    Socket,
-    (ack: (arg0: { [key: string]: V }) => void) => void
-  >;
-  unsubscribeSocket: Map<Socket, () => void>;
+class SyncHost<V extends object> extends Base {
+  readonly io!: Server
+  readonly keyword: keyof ListSyncKeywords;
+  data: V;
 
-  constructor(io: Server, keyword: keyof ListSyncKeywords, def: { [key: string]: V } = {}, manager: SyncManager = SyncStore.getManager(io)) {
+  constructor(io: Server, keyword: keyof ListSyncKeywords, def: V = {}, manager: SyncManager = SyncStore.getManager(io)) {
     super(io);
 
     this.keyword = keyword;
     this.data = def;
-    this.sockets = new Set();
-
-    this.subscribeSocket = new Map();
-    this.unsubscribeSocket = new Map();
     
     //Add the syncHost to its SyncManager
     manager.addHost(this)
   }
 
-  route(callback: (...args: any[]) => void): (keyword: string, ...args: any[]) => void {
-    return (keyword: string, ...args: any[]) => {
-      if (this.keyword === keyword) {
-        callback(...args);
-      }
-    };
-  }
-
-  create(key: string, value: V) {
-    const { data, io, keyword } = this;
-    data[key] = clone(value);
-
-    io.to(keyword).emit("sync_create", keyword, key, value);
-  }
-
-  update(...path: any[]) {
+  update(diff) {
     const { data, io, keyword } = this;
 
     try {
-      const value = path.pop();
-      const prop = path.pop();
-      const obj = path.reduce(
-        (c: { [key: string]: { [key: string]: any } }, k: string) => c[k],
-        data
-      );
-
-      obj[prop] = value;
-      io.to(keyword).emit(`sync_update`, keyword, value, ...path);
+      function patch(d, diff) {
+        for (const [key, value] of Object.entries(diff)) {
+          if (!diff.hasOwnProperty(key) || typeof value !== typeof diff[key]) {
+            d[key] = value;
+            continue;
+          }
+          
+          if (typeof value === 'object') {
+            patch(value, d[key])
+            continue;
+          }
+          
+          d[key] = value
+        }
+      }
+      
+      patch(data, diff)
+      io.to(keyword).emit(`sync_diff`, diff);
     } catch {
-      console.error(`Error in update sync with args ${path}`);
+      console.error(`Error in diff`);
     }
-  }
-
-  delete(key: string) {
-    const { data, io, keyword } = this;
-
-    delete data[key];
-
-    io.to(keyword).emit("sync_delete", keyword, key);
-  }
-
-  set(data: { [key: string]: V }) {
-    const { io, keyword } = this;
-    this.data = clone(data);
-    io.to(keyword).emit(`sync_data`, keyword, data);
   }
 
   subscribe(socket: Socket) {
