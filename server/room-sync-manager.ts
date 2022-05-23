@@ -1,5 +1,5 @@
 import BaseManager from "./base-manager"
-import SyncHost from "./sync"
+import ListSyncHost from "./list-sync"
 
 import type Room from "./room"
 import type { RoomTemplate } from "./room"
@@ -9,9 +9,9 @@ import SyncManagerStore, { SyncManager } from "./sync-manager"
 import { RoomSocket } from "./room-socket-types"
 
 export default class RoomSyncManager extends BaseManager {
-    usersSync!: SyncHost<UserTemplate>
-    stateSync!: SyncHost<any>
-    listSync!: SyncHost<RoomTemplate>
+    usersSync!: ListSyncHost<UserTemplate>
+    stateSync!: ListSyncHost<any>
+    listSync!: ListSyncHost<RoomTemplate>
     syncManager: SyncManager
 
     constructor(room: Room) {
@@ -20,8 +20,8 @@ export default class RoomSyncManager extends BaseManager {
         const { io, code } = this;
 
         Object.assign(this, {
-            usersSync: new SyncHost(io, 'room_users', {}),
-            stateSync: new SyncHost(io, 'room_state', {
+            usersSync: new ListSyncHost(io, 'room_users', {}),
+            stateSync: new ListSyncHost(io, 'room_state', {
                 state: 'lobby',
                 cardPack: 'fruits'
             }),

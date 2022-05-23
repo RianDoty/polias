@@ -4,27 +4,27 @@ import { RoomTemplate } from "./room";
 import SyncStore, { SyncManager } from "./sync-manager";
 import { UserTemplate } from "./user";
 
-interface SyncServerEvents {
+interface ListSyncServerEvents {
   sync_create: (keyword: string, key: string, value: unknown) => void
   sync_update: (keyword: string, value: unknown, ...keys: string[]) => void
   sync_delete: (keyword: string, key: string) => void
   sync_data: (keyword: string, data: { [key: string]: unknown }) => void
 }
 
-export interface SyncKeywords {
+export interface ListSyncKeywords {
   rooms: RoomTemplate
   room_users: UserTemplate
   room_state: any
 }
 
-type Socket = SocketType<any, SyncServerEvents>;
-type Server = Namespace<any, SyncServerEvents>
+type Socket = SocketType<any, ListSyncServerEvents>;
+type Server = Namespace<any, ListSyncServerEvents>
 
 const clone = require("lodash.clonedeep");
 
-class SyncHost<V> extends Base {
+class ListSyncHost<V> extends Base {
   io!: Server
-  keyword: keyof SyncKeywords;
+  keyword: keyof ListSyncKeywords;
   data: { [key: string]: V };
   sockets: Set<Socket>;
   subscribeSocket: Map<
@@ -33,7 +33,7 @@ class SyncHost<V> extends Base {
   >;
   unsubscribeSocket: Map<Socket, () => void>;
 
-  constructor(io: Server, keyword: keyof SyncKeywords, def: { [key: string]: V } = {}, manager: SyncManager = SyncStore.getManager(io)) {
+  constructor(io: Server, keyword: keyof ListSyncKeywords, def: { [key: string]: V } = {}, manager: SyncManager = SyncStore.getManager(io)) {
     super(io);
 
     this.keyword = keyword;
@@ -107,4 +107,4 @@ class SyncHost<V> extends Base {
   }
 }
 
-export default SyncHost;
+export default ListSyncHost;

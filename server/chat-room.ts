@@ -2,7 +2,7 @@
 import Base from "./base";
 import type ChatRoomManager from "./chat-manager";
 import type { RoomSocket } from "./room-socket-types";
-import SyncHost from "./sync";
+import ListSyncHost from "./list-sync";
 import type { UserTemplate } from "./user";
 
 export interface ChatMessage {
@@ -12,19 +12,24 @@ export interface ChatMessage {
 
 type CallbacksList = [string, (...args: any[]) => void][]
 
+export type ChatKeyword = 'lobby'
+export type ChatInternalKeyword = `room_chat_${ChatKeyword}`
+
+export type ChatRoomKeywords = {[key in ChatInternalKeyword]: ChatMessage}
+
 class ChatRoom extends Base {
-  sync!: SyncHost<ChatMessage>
+  sync!: ListSyncHost<ChatMessage>
   sockets!: Set<RoomSocket>
   callbacks!: Map<RoomSocket, CallbacksList>
-  keyword!: string
+  keyword!: ChatInternalKeyword
 
-  constructor(manager: ChatRoomManager, chatKeyword: string) {
+  constructor(manager: ChatRoomManager, chatKeyword: ChatKeyword) {
     super(manager.io)
-    const keyword = `room chat ${chatKeyword}`;
+    const keyword: ChatInternalKeyword = `room_chat_${chatKeyword}`;
 
     Object.assign(this, {
       keyword,
-      sync: new SyncHost(this.io, keyword),
+      sync: new ListSyncHost(this.io, keyword),
       sockets: new Set(),
       callbacks: new Map()
     })

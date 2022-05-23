@@ -1,7 +1,7 @@
 import type Room from "./room";
 
 //Manages chat rooms
-import ChatRoom from "./chat-room";
+import ChatRoom, { ChatKeyword } from "./chat-room";
 import BaseManager from './base-manager';
 
 class ChatRoomManager extends BaseManager {
@@ -21,7 +21,7 @@ class ChatRoomManager extends BaseManager {
     return this.chatRooms.get(keyword)
   }
 
-  createRoom(keyword: string) {
+  createRoom(keyword: ChatKeyword) {
     this.chatRooms.set(keyword, new ChatRoom(this, keyword));
   }
 

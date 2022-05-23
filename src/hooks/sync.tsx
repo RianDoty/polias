@@ -2,11 +2,11 @@ import { EffectCallback, useEffect, useState } from "react";
 import useVolatileState from "./volatile-state";
 import useSocketCallbacks from "./socket-callbacks";
 import { Socket } from "socket.io-client";
-import type { SyncKeywords } from "../../server/sync";
+import type { ListSyncKeywords } from "../../server/list-sync";
 
 
 
-export default function useSync<k extends keyof SyncKeywords>(socket: Socket, keyword: k, def = {}, log = false): [boolean, {[key: string]: SyncKeywords[k]}, Function] {
+export default function useSync<k extends keyof ListSyncKeywords>(socket: Socket, keyword: k, def = {}, log = false): [boolean, {[key: string]: ListSyncKeywords[k]}, Function] {
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useVolatileState(def);
 

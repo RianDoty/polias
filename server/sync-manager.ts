@@ -1,6 +1,6 @@
  import Base from "./base";
 import type { Namespace, Socket as SocketType } from 'socket.io'
-import type SyncHost from "./sync";
+import type ListSyncHost from "./list-sync";
 
 interface SyncClientEvents {
   sync_subscribe: (keyword: string) => void;
@@ -34,7 +34,7 @@ export class SyncManagerStore {
 }
 
 export class SyncManager {
-  hosts: Map<string, SyncHost<unknown>>
+  hosts: Map<string, ListSyncHost<unknown>>
   
   constructor() {
     this.hosts = new Map()
@@ -44,7 +44,7 @@ export class SyncManager {
     return this.hosts.get(keyword)
   }
   
-  addHost(host: SyncHost<unknown>) {
+  addHost(host: ListSyncHost<unknown>) {
     const { io, keyword } = host;
 
     if (this.hosts.has(keyword)) throw `Duplicate SyncHost created: ${keyword}`;
