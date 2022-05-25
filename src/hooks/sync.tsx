@@ -1,65 +1,64 @@
 import { EffectCallback, useEffect, useState } from "react";
 import useVolatileState from "./volatile-state";
 import useSocketCallbacks from "./socket-callbacks";
+import type { ListSyncKeywords, SyncClientEvents, SyncServerEvents } from "../../server/sync";
 import { Socket } from "socket.io-client";
-import type { ListSyncKeywords } from "../../server/list-sync";
 
+function JSONClone<O extends object>(obj: O): O {
+  return JSON.parse(JSON.stringify(obj))
+}
 
+function patch<D extends object>(d: D, diff: Partial<D>) {
+  for (const [key, value] of Object.entries(diff)) {
+    function hasKey(tbl: {}): tbl is {[index: typeof key]: unknown} {
+      return tbl.hasOwnProperty(key)
+    }
 
-export default function useSync<k extends keyof ListSyncKeywords>(socket: Socket, keyword: k, def = {}, log = false): [boolean, {[key: string]: ListSyncKeywords[k]}, Function] {
+    if (!hasKey(d) || typeof value !== typeof d[key]) {
+      Object.assign(d, {key: value})
+      continue;
+    }
+    
+    if (value && typeof value === 'object') {
+      const dk = d[key]
+      if (dk && typeof dk === 'object') {
+        patch(value, dk)
+        continue;
+      }
+    }
+    
+    if (value === undefined) delete d[key]
+
+    Object.assign(d, {key: value})
+  }
+  return d
+}
+
+export default function useSync<k extends keyof ListSyncKeywords>(socket: Socket<SyncServerEvents, SyncClientEvents>, keyword: k, def: JSONObj = {}, log = false): [boolean, ListSyncKeywords[k], Function] {
   const [loading, setLoading] = useState(true);
-  const [store, setStore] = useVolatileState(def);
+  const [store, setStore] = useState(def);
 
   useEffect(() => {
     socket.emit("sync_subscribe", keyword)
     return () => void socket.emit("sync_unsubscribe", keyword);
   }, [keyword]);
 
-  const route =
-    (callback) =>
-    (kw, ...args) => {
-      if (kw === keyword) callback(...args);
-    };
+  function route<A extends unknown[]>(callback: (...args: A) => void) {
+    return (kw: string, ...args: A) => {if (kw === keyword) callback(...args)}
+  }
 
-  const onData = route((data) => {
+  const onData = route((data: ListSyncKeywords[k]) => {
     setStore(data)
     setLoading(false)
   })
-  
-  const onCreate = route((key, value) => {
-    setStore((store) => {
-      if (log)
-        console.log(`${keyword} to create k: ${key.slice(0, 7)} v:`, value);
-      store[key] = value;
-      return store;
-    });
-  });
 
-  const onUpdate = route((value, ...props) => {
-    setStore((store) => {
-      if (log) console.log(`${keyword} to update k: ${props} value: ${value}`);
-      const lastProp = props.pop();
-      const lastObject = props.reduce((st, prop) => st[prop], store);
-
-      lastObject[lastProp] = value;
-
-      return store;
-    });
-  });
-
-  const onDelete = route((key) => {
-    setStore((store) => {
-      if (log) console.log(`${keyword} to delete k: ${key.slice(0, 7)}`);
-      delete store[key];
-      return store;
-    });
-  });
+  const onDiff = route((diff: Partial<ListSyncKeywords[k]>) => {
+    setStore((store: object) => patch(JSONClone(store), diff))
+  })
 
   useSocketCallbacks(socket, {
     sync_data: onData,
-    sync_create: onCreate,
-    sync_update: onUpdate,
-    sync_delete: onDelete,
+    sync_diff: onDiff
   });
 
   return [loading, store, setStore];

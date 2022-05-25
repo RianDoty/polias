@@ -25,8 +25,8 @@ export interface RoomParameters {
 export interface RoomTemplate {
   name: string
   code: string
-  hostName?: string
-  password?: string
+  hostName: string
+  password: string
   pCount: number
   pMax: number
 }
@@ -108,13 +108,14 @@ class Room extends Base {
   }
 
   template(): RoomTemplate {
-    const { name, code, host } = this
+    const { name, code, host, password } = this
     return {
       name,
       code,
-      hostName: host? host.name : undefined,
+      hostName: host? host.name : 'Unnamed',
       pCount: this.userCount,
-      pMax: 999
+      pMax: 999,
+      password:  password || ''
     }
   }
 

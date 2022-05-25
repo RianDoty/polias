@@ -1,5 +1,5 @@
 import BaseManager from "./base-manager"
-import ListSyncHost from "./list-sync"
+import ListSyncHost from "./sync"
 
 import type Room from "./room"
 import type { RoomTemplate } from "./room"
@@ -43,11 +43,11 @@ export default class RoomSyncManager extends BaseManager {
     }
 
     addUser(user: User) {
-        this.usersSync.create(user.userID, user.template())
+        this.usersSync.update({[user.userID]: user.template()})
     }
 
     deleteUser(user: User) {
-        this.usersSync.delete(user.userID)
+        this.usersSync.update({[user.userID]: undefined})
     }
 
     updateUser(user: User, ...pathThenValue: any[]) {

@@ -1,7 +1,7 @@
 import Base from "./base";
 import Room from "./room";
 import type { RoomData, RoomTemplate } from './room'
-import ListSyncHost from "./list-sync";
+import ListSyncHost from "./sync";
 import { randomCode, unregisterCode } from "./random-code";
 import type { Server } from "./socket-types";
 

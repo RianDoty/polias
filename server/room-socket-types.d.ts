@@ -1,9 +1,9 @@
 import { Namespace, Socket } from 'socket.io'
 import { ChatRoomEvents } from './chat-room'
-import { SyncClientEvents, SyncServerEvents } from './list-sync'
+import { SyncClientEvents, SyncServerEvents } from './sync'
 import User from './user'
 
-interface ServerToClientEvents {
+interface ServerToClientEventsBase {
     sync_create: (keyword: string, key: string, value: unknown) => void
     sync_update: (keyword: string, value: unknown, ...keys: string[]) => void
     sync_delete: (keyword: string, key: string) => void
@@ -11,11 +11,17 @@ interface ServerToClientEvents {
     session: ({sessionID: string, userID: string}) => void
     room_chat: () => void
 }
-interface ClientToServerEvents {
+
+export type ServerToClientEvents = ServerToClientEventsBase & SyncClientEvents
+
+interface ClientToServerEventsBase {
     send_message: (content: string) => void
     sync_subscribe: (keyword: string) => void
     sync_unsubscribe: (keyword: string) => void
 }
+
+export type ClientToServerEvents = ClientToServerEventsBase & SyncServerEvents
+
 interface InterServerEvents {
 
 }
