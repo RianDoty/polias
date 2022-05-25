@@ -5,17 +5,17 @@ import SyncStore, { SyncManager } from "./sync-manager";
 import { UserTemplate } from "./user";
 
 export interface SyncServerEvents {
-  sync_data: <T extends keyof ListSyncKeywords>(keyword: T, data: ListSyncKeywords[T]) => void
-  sync_diff: <T extends keyof ListSyncKeywords>(keyword: T, diff: Partial<ListSyncKeywords[T]>) => void
+  sync_data: <T extends keyof SyncKeywords>(keyword: T, data: SyncKeywords[T]) => void
+  sync_diff: <T extends keyof SyncKeywords>(keyword: T, diff: Partial<SyncKeywords[T]>) => void
 }
 
 export interface SyncClientEvents {
-  sync_subscribe: (keyword: keyof ListSyncKeywords) => void
-  sync_unsubscribe: (keyword: keyof ListSyncKeywords) => void
+  sync_subscribe: (keyword: keyof SyncKeywords) => void
+  sync_unsubscribe: (keyword: keyof SyncKeywords) => void
 }
 
 type ListOf<T> = {[key: string]: T}
-export interface ListSyncKeywords {
+export interface SyncKeywords {
   rooms: ListOf<RoomTemplate>
   room_users: ListOf<UserTemplate>
   room_state: ListOf<{key?: string}>
@@ -24,52 +24,51 @@ export interface ListSyncKeywords {
 type Socket = SocketType<any, SyncServerEvents>;
 type Server = Namespace<any, SyncServerEvents>
 
-const clone = require("lodash.clonedeep");
+function hasKey<K extends string>(tbl: {}, key: K): tbl is {[index in K]: unknown} {
+  return tbl.hasOwnProperty(key)
+}
 
-class SyncHost<V extends object> extends Base {
+function patch<D extends object>(d: D, diff: Partial<D>) {
+  for (const [key, value] of Object.entries(diff)) {
+
+    if (!hasKey(d, key) || typeof value !== typeof d[key]) {
+      Object.assign(d, {key: value})
+      continue;
+    }
+    
+    if (value && typeof value === 'object') {
+      const dk = d[key]
+      if (dk && typeof dk === 'object') {
+        patch(value, dk)
+        continue;
+      }
+    }
+    
+    if (value === undefined) delete d[key]
+
+    Object.assign(d, {key: value})
+  }
+}
+
+class SyncHost<V extends keyof SyncKeywords> extends Base {
   readonly io!: Server
-  readonly keyword: keyof ListSyncKeywords;
-  data: V;
+  readonly keyword: V;
+  data: SyncKeywords[V];
 
-  constructor(io: Server, keyword: keyof ListSyncKeywords, def: V, manager: SyncManager = SyncStore.getManager(io)) {
+  constructor(io: Server, keyword: V, def: SyncKeywords[V], manager: SyncManager = SyncStore.getManager(io)) {
     super(io);
 
     this.keyword = keyword;
-    this.data = def || {};
+    this.data = def;
     
     //Add the syncHost to its SyncManager
     manager.addHost(this)
   }
 
-  update(diff: Partial<V>) {
+  update(diff: Partial<SyncKeywords[V]>) {
     const { data, io, keyword } = this;
 
     try {
-      function patch<D extends object>(d: D, diff: Partial<D>) {
-        for (const [key, value] of Object.entries(diff)) {
-          function hasKey(tbl: {}): tbl is {[index: typeof key]: unknown} {
-            return tbl.hasOwnProperty(key)
-          }
-
-          if (!hasKey(d) || typeof value !== typeof d[key]) {
-            Object.assign(d, {key: value})
-            continue;
-          }
-          
-          if (value && typeof value === 'object') {
-            const dk = d[key]
-            if (dk && typeof dk === 'object') {
-              patch(value, dk)
-              continue;
-            }
-          }
-          
-          if (value === undefined) delete d[key]
-
-          Object.assign(d, {key: value})
-        }
-      }
-      
       patch(data, diff)
       io.to(keyword).emit(`sync_diff`, this.keyword,  diff);
     } catch {
