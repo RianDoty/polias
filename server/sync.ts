@@ -1,34 +1,34 @@
-import { Namespace, Socket as SocketType } from "socket.io";
+import { Namespace } from "socket.io";
 import Base from "./base";
 import { RoomTemplate } from "./room";
-import SyncStore, { SyncManager } from "./sync-manager";
 import { UserTemplate } from "./user";
 
-export interface SyncServerEvents {
-  sync_data: <T extends keyof SyncKeywords>(keyword: T, data: SyncKeywords[T]) => void
-  sync_diff: <T extends keyof SyncKeywords>(keyword: T, diff: Partial<SyncKeywords[T]>) => void
-}
-
-export interface SyncClientEvents {
-  sync_subscribe: (keyword: keyof SyncKeywords) => void
-  sync_unsubscribe: (keyword: keyof SyncKeywords) => void
+export interface SyncServerEvents<k extends keyof SyncKeywords> {
+  sync_data: (data: SyncKeywords[k]) => void
+  sync_diff: (diff: SyncKeywords[k]) => void
 }
 
 type ListOf<T> = {[key: string]: T}
 export interface SyncKeywords {
   rooms: ListOf<RoomTemplate>
   room_users: ListOf<UserTemplate>
-  room_state: ListOf<{key?: string}>
+  room_state: {
+    state: 'lobby' | 'game'
+  }
+  room_options: {
+    cardPack: 'fruits'
+  }
+  chat_log: ListOf<MessageTemplate>
 }
 
-type Socket = SocketType<any, SyncServerEvents>;
-type Server = Namespace<any, SyncServerEvents>
+type Server<k extends keyof SyncKeywords> = Namespace<any, SyncServerEvents<k>>
 
 function hasKey<K extends string>(tbl: {}, key: K): tbl is {[index in K]: unknown} {
   return tbl.hasOwnProperty(key)
 }
 
-function patch<D extends object>(d: D, diff: Partial<D>) {
+export type Diff<T> = {[K in keyof T]?: Diff<T[K]>}
+function patch<D extends object>(d: D, diff: Diff<D>) {
   for (const [key, value] of Object.entries(diff)) {
 
     if (!hasKey(d, key) || typeof value !== typeof d[key]) {
@@ -51,41 +51,36 @@ function patch<D extends object>(d: D, diff: Partial<D>) {
 }
 
 class SyncHost<V extends keyof SyncKeywords> extends Base {
-  readonly io!: Server
+  readonly io!: Server<V>
+  readonly nsp: Namespace
   readonly keyword: V;
   data: SyncKeywords[V];
 
-  constructor(io: Server, keyword: V, def: SyncKeywords[V], manager: SyncManager = SyncStore.getManager(io)) {
+  constructor(io: Namespace, keyword: V, def: SyncKeywords[V]) {
     super(io);
 
-    this.keyword = keyword;
+    this.keyword = keyword; 
     this.data = def;
-    
-    //Add the syncHost to its SyncManager
-    manager.addHost(this)
+
+    const nsp = io.server.of(`${io.name}sync/${keyword}/`)
+    this.nsp = nsp;
+
+    nsp.on('connect', (socket) => {
+      socket.emit('sync_data', this.data)
+    })
+
+    console.log(`initiating sync ${io.name}sync/${keyword}/`)
   }
 
-  update(diff: Partial<SyncKeywords[V]>) {
-    const { data, io, keyword } = this;
+  update(diff: Diff<SyncKeywords[V]>) {
+    const { data, nsp } = this;
 
     try {
       patch(data, diff)
-      io.to(keyword).emit(`sync_diff`, this.keyword,  diff);
+      nsp.emit(`sync_diff`,  diff);
     } catch {
       console.error(`Error in diff`);
     }
-  }
-
-  subscribe(socket: Socket) {
-    //Return the current value to the client as the initial value
-    socket.emit('sync_data', this.keyword, this.data)
-    //The client is sent further changes
-    socket.join(this.keyword);
-  }
-
-  unsubscribe(socket: Socket) {
-    //Stop sending the client changes
-    socket.leave(this.keyword);
   }
 }
 

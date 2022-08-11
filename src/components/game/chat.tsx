@@ -15,11 +15,11 @@ function randomFromArray(arr) {
   return arr[randomInt(arr.length)]
 }
 
-const Chat = ({chatRoomName='lobby'}) => {
+const Chat = ({chatRoomName='lobby'}: {chatRoomName}) => {
   const code = useContext(RoomContext)
   const user = useContext(UserContext)
   const keyword = `room chat ${chatRoomName} ${code}`;
-  const [messages, setMessages] = useSync(`room chat ${chatRoomName} ${code}`)
+  const [messages, setMessages] = useSync(`/${code}/`, `/room_chat_${chatRoomName}`)
   const [debug, setDebug] = useState('')
   
   const currentKey = () => Object.keys(messages).reduce(((big, cur) => cur > big ? cur : big), 0)

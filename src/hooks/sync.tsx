@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import useSocketCallbacks from "./socket-callbacks";
 import type {
-  ListSyncKeywords,
-  SyncClientEvents,
+  SyncKeywords,
   SyncServerEvents
 } from "../../server/sync";
 import { Socket } from "socket.io-client";
+import useSocket from "./socket";
 
 function JSONClone<O extends object>(obj: O): O {
   return JSON.parse(JSON.stringify(obj));
@@ -37,40 +37,25 @@ function patch<D extends object>(d: D, diff: Partial<D>) {
   return d;
 }
 
-export default function useSync<k extends keyof ListSyncKeywords>(
-  socket: Socket<SyncServerEvents, SyncClientEvents>,
-  keyword: k,
-  def: ListSyncKeywords[k] = {},
-  log = false
-): [boolean, ListSyncKeywords[k], Function] {
+export default function useSync<k extends keyof SyncKeywords>(nsp: string = '/', keyword: k): [true] | [false, SyncKeywords[k], Function] {
   const [loading, setLoading] = useState(true);
-  const [store, setStore] = useState(def);
+  const [store, setStore] = useState<SyncKeywords[k]>();
+	const socket = useSocket<SyncServerEvents<k>>(`${nsp}sync/${keyword}/`)
 
-  useEffect(() => {
-    setLoading(true);
-    socket.emit("sync_subscribe", keyword);
-    return () => void socket.emit("sync_unsubscribe", keyword);
-  }, [keyword, socket]);
-
-  function route<A extends unknown[]>(callback: (...args: A) => void) {
-    return (kw: k, ...args: A) => {
-      if (kw === keyword) callback(...args);
-    };
-  }
-
-  const onData = route((data: ListSyncKeywords[k]) => {
+  const onData = (data: SyncKeywords[k]) => {
     setStore(data);
     setLoading(false);
-  });
+  };
 
-  const onDiff = route((diff: Partial<ListSyncKeywords[k]>) => {
-    setStore((store: ListSyncKeywords[k]) => patch(JSONClone(store), diff));
-  });
+  const onDiff = (diff: Partial<SyncKeywords[k]>) => {
+    setStore((store: SyncKeywords[k]) => patch(JSONClone(store), diff));
+  };
 
   useSocketCallbacks(socket, {
     sync_data: onData,
     sync_diff: onDiff
   });
 
-  return [loading, store, setStore];
+  return loading? [true] : [false, store, setStore];
 }
+

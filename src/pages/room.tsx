@@ -16,22 +16,17 @@ import "../styles/game.css";
 import type { RouteComponentProps } from "wouter";
 import { RoomSocketProvider } from "../contexts/room-socket";
 import useSync from "../hooks/sync";
-
-function useSocket(namespace: string, options: Partial<ManagerOptions & SocketOptions>) {
-  const { current: socket } = useRef(io(namespace, options))
-
-  return socket
-}
+import useSocket from "../hooks/socket";
 
 export default function RoomMain({ params: { code } }: RouteComponentProps<{ code: string }>) {
-  const socket = useSocket(`/${code}`, {autoConnect: false})  
+  const socket = useSocket(`/${code}/`, {autoConnect: false})  
 
-  const { cardPack } = useSync(socket, 'room_options')
+  const [loading, options] = useSync(`/${code}/`, 'room_options')
 
   return (
     <RoomSocketProvider value={socket}>
       <RoomContext.Provider value={code}>
-        <CardPackContext.Provider value={cardPack}>
+        <CardPackContext.Provider value={loading? null : options.cardPack}>
           <LeftSideBar players={{}} />
           <MiddleContent />
           <Console />

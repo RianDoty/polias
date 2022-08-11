@@ -54,7 +54,7 @@ class Room extends Base {
     this.manager = manager
     this.password = password
 
-    const ioNamespace = this.io.server.of(`/${this.code}`);
+    const ioNamespace = this.io.server.of(`${this.io.name}${this.code}/`);
     this.ioNamespace = ioNamespace
 
     //Password Authentication

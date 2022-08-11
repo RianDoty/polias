@@ -1,7 +1,7 @@
 import Base from "./base";
 import Room from "./room";
 import type { RoomData, RoomTemplate } from './room'
-import ListSyncHost from "./sync";
+import SyncHost from "./sync";
 import { randomCode, unregisterCode } from "./random-code";
 import type { Server } from "./socket-types";
 
@@ -9,14 +9,14 @@ const noop = () => {};
 
 class RoomManager extends Base {
   rooms: Map<string, Room>
-  syncHost: ListSyncHost<RoomTemplate>
+  syncHost: SyncHost<'rooms'>
 
   constructor(io: Server) {
     super(io)
 
     this.rooms = new Map();
     
-    this.syncHost = new ListSyncHost(io, "rooms");
+    this.syncHost = new SyncHost(io, "rooms", {});
   }
 
   createRoom(roomData: RoomData) {
@@ -25,6 +25,7 @@ class RoomManager extends Base {
     
     const newRoom = new Room(this, roomData);
     this.rooms.set(code, newRoom)
+    this.syncHost.update({[code]: newRoom.template()})
     
     return newRoom
   }
@@ -32,7 +33,7 @@ class RoomManager extends Base {
   destroyRoom(room: Room) {
     const { code } = room;
     this.rooms.delete(code);
-    this.syncHost.delete(code);
+    this.syncHost.update({[code]: undefined});
     unregisterCode(code)
   }
 

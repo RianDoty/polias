@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import UserContext from "../../contexts/user";
-import RoomContext from "../../contexts/room";
 import socket from '../../socket'
-import useRoom from "../../hooks/room";
 
 import "../../styles/action-board.css";
 
@@ -32,23 +30,24 @@ const SwapSpectatePlayButton = () => {
 };
 
 const StartGameButton = () => {
-  const [disabled, setDisabled] = useState(false);
-  const [debug, setDebug] = useState();
-  const { state } = useRoom(useContext(RoomContext));
+  // const [disabled, setDisabled] = useState(false);
+  // const [debug, setDebug] = useState();
+  // const { state } = useRoom(useContext(RoomContext));
   
-  useEffect(()=>{
-    setDisabled(state !== 'lobby')
-  },[state])
+  // useEffect(()=>{
+  //   setDisabled(state !== 'lobby')
+  // },[state])
   
-  const onClick = (e) => {
-    //Signal the server to start the game
-    socket.emit('game_start')
-  }
+  // const onClick = (e) => {
+  //   //Signal the server to start the game
+  //   socket.emit('game_start')
+  // }
   
   return (
-    <button className='button' onClick={onClick}  disabled={disabled}>
-      Start Game
-    </button>
+    <></>
+    // <button className='button' onClick={onClick}  disabled={disabled}>
+    //   Start Game
+    // </button>
   )
 };
 

@@ -126,7 +126,7 @@ const RoomCreator = () => {
 
 //Displays a list of every ongoing room
 const RoomList = () => {
-  const [loading, rooms] = useSync(socket, 'rooms');
+  const [loading, rooms] = useSync('/', 'rooms');
 
   if (loading) {
     return (
@@ -137,7 +137,7 @@ const RoomList = () => {
       </div>
     )
   }
-  console.log(rooms)
+
   const e = Object.entries(rooms).map(([i, r]) => (
     <div key={i}>
       <RoomEntry room={r} />
