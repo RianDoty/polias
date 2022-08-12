@@ -12,19 +12,23 @@ code {
     monospace;
 }
 
+* {
+  outline: auto;
+}
+
 /*root vars*/
 :root {
   --header-height: 57px;
-  
+
   /*palette*/
   --background: #222233;
-  --highlight: #1188CC;
-  --highlight2: #2299DD;
+  --highlight: #1188cc;
+  --highlight2: #2299dd;
   --highlight3: #202540;
   --shade3: #2f2f35;
   --shade2: #2a2a31;
   --shade: #222222;
-  --shadow: #1B1B1A;
+  --shadow: #1b1b1a;
 }
 
 * {

@@ -1,6 +1,5 @@
-'use strict'
 import React from "react";
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import useSync from "../hooks/sync";
 
@@ -8,8 +7,8 @@ import useUsername from "../contexts/username";
 
 import "../styles/home.css";
 
-import socket from '../socket'
-import useSocketCallbacks from '../hooks/socket-callbacks'
+import socket from "../socket";
+import useSocketCallbacks from "../hooks/socket-callbacks";
 import { RoomTemplate } from "../../server/room";
 
 //Components
@@ -18,6 +17,10 @@ const Section = ({ children }) => (
 );
 
 const BottomLogo = () => <h3 className="bottom-logo">Polias</h3>;
+
+const CellHeader = ({ children }) => (
+  <div className="cell-header">{children}</div>
+);
 
 const Cell = ({ children, wClass, header }) => (
   <div className={`cell ${wClass}`}>
@@ -28,31 +31,29 @@ const Cell = ({ children, wClass, header }) => (
   </div>
 );
 
-const CellHeader = ({ children }) => (
-  <div className="cell-header">{children}</div>
+const ErrorComponent = ({ children }) => (
+  <span className="error">{children}</span>
 );
-
-const Error = ({ children }) => <span className="error">{children}</span>;
 
 //Displays a form for the user to enter their name
 const NameEntry = ({ setUsername }) => {
   const [inpVal, updateInpVal] = useState("");
   const [err, setErr] = useState("");
-  
+
   function onSubmit(e) {
     e.preventDefault();
 
     try {
       if (inpVal) {
-        const username = inpVal
+        const username = inpVal;
         //The input is valid, set the user's name
-        setUsername(username)
+        setUsername(username);
 
         //Submit username to server
-        socket.emit('username', username)
-      } else throw "Invalid name!";
+        socket.emit("username", username);
+      } else throw Error("Invalid name!");
 
-      setErr("")
+      setErr("");
     } catch (err) {
       setErr(err.message);
     }
@@ -60,7 +61,7 @@ const NameEntry = ({ setUsername }) => {
 
   let errComponent;
   if (err) {
-    errComponent = <Error>{err}</Error>;
+    errComponent = <ErrorComponent>{err}</ErrorComponent>;
   }
 
   return (
@@ -87,7 +88,7 @@ const NameEntry = ({ setUsername }) => {
 
 //Displays a form for naming and creating a room
 const RoomCreator = () => {
-  const [err, setErr] = useState('');
+  const [err, setErr] = useState("");
   const [name, setName] = useState("");
   const [username] = useUsername();
 
@@ -101,12 +102,12 @@ const RoomCreator = () => {
 
     console.log("submitted");
     //Tell the server to create a room with the given name
-    socket.emit("room_create", {name});
+    socket.emit("room_create", { name });
   };
 
   let errComponent;
   if (err) {
-    errComponent = <Error>{err}</Error>;
+    errComponent = <ErrorComponent>{err}</ErrorComponent>;
   }
 
   return (
@@ -126,17 +127,37 @@ const RoomCreator = () => {
 
 //Displays a list of every ongoing room
 const RoomList = () => {
-  const [loading, rooms] = useSync('/', 'rooms');
+  const [loading, rooms] = useSync("/", "rooms");
 
   if (loading) {
     return (
-      <div className='dashboard-list'>
-        <span className="muted">
-          Loading...
-        </span>
+      <div className="dashboard-list">
+        <span className="muted">Loading...</span>
       </div>
-    )
+    );
   }
+
+  const RoomEntry = ({ room }: { room: RoomTemplate }) => {
+    const { code, name, hostName, pCount } = room;
+    const pMax = "∞";
+    return (
+      <Link href={`/game/${code}`}>
+        <strong>{name}</strong>
+        <div className="muted">
+          Hosted by {hostName}
+          {"  "}
+          <span className="p-4px">
+            {/*Player Count*/}
+            <strong>
+              {pCount}
+              <span className="f-80"> OF </span>
+              {pMax}
+            </strong>
+          </span>
+        </div>
+      </Link>
+    );
+  };
 
   const e = Object.entries(rooms).map(([i, r]) => (
     <div key={i}>
@@ -147,42 +168,26 @@ const RoomList = () => {
   return <div className="dashboard-list">{e}</div>;
 };
 
-const RoomEntry = ({ room }: { room: RoomTemplate }) => {
-  const { code, name, hostName, pCount } = room;
-  const pMax = '∞'
-  return (
-    <Link href={`/game/${code}`}>
-      <strong>{name}</strong>
-      <div className="muted">
-        Hosted by {hostName}{"  "}
-        <span className="p-4px">
-          {/*Player Count*/}
-          <strong>
-            {pCount}
-            <span className="f-80"> OF </span>
-            {pMax}
-          </strong>
-        </span>
-      </div>
-    </Link>
-  );
-};
-
-socket.on('connect', () => {})
+socket.on("connect", () => {});
 //Page
 export default function Home() {
   const [username, setUsername] = useUsername();
-  const [connected, setConnected] = useState(false)
-  const [, setLocation] = useLocation()
-  
+  const [connected, setConnected] = useState(false);
+  const [, setLocation] = useLocation();
+
   useSocketCallbacks(socket, {
-    connect: () => {setConnected(true); console.log('Base socket connected successfully.')},
+    connect: () => {
+      setConnected(true);
+      console.log("Base socket connected successfully.");
+    },
     disconnect: () => setConnected(false),
-    connect_error: (e) => {setConnected(false); console.log('Connection Error:', e.message)},
+    connect_error: (e) => {
+      setConnected(false);
+      console.log("Connection Error:", e.message);
+    },
     room_send: (code) => setLocation(`/game/${code}`)
-  })
-  
-  
+  });
+
   let middleSection;
   if (connected && username) {
     middleSection = (

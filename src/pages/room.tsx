@@ -1,5 +1,5 @@
-import React, { useRef } from "react";
-import io, { ManagerOptions, SocketOptions } from 'socket.io-client'
+import React from "react";
+//import io, { ManagerOptions, SocketOptions } from "socket.io-client";
 
 //Game-related stuff
 import RoomContext from "../contexts/room";
@@ -17,20 +17,31 @@ import type { RouteComponentProps } from "wouter";
 import { RoomSocketProvider } from "../contexts/room-socket";
 import useSync from "../hooks/sync";
 import useSocket from "../hooks/socket";
+import ErrorBoundary from "../components/error-boundary";
 
-export default function RoomMain({ params: { code } }: RouteComponentProps<{ code: string }>) {
-  const socket = useSocket(`/${code}/`, {autoConnect: false})  
+export default function RoomMain({
+  params: { code }
+}: RouteComponentProps<{ code: string }>) {
+  const socket = useSocket(`/${code}/`, { autoConnect: false });
 
-  const [loading, options] = useSync(`/${code}/`, 'room_options')
+  const [loading, options] = useSync(`/${code}/`, "room_options");
 
   return (
     <RoomSocketProvider value={socket}>
       <RoomContext.Provider value={code}>
-        <CardPackContext.Provider value={loading? null : options.cardPack}>
-          <LeftSideBar players={{}} />
-          <MiddleContent />
-          <Console />
-          <NameEntryScreen />
+        <CardPackContext.Provider value={loading ? null : options.cardPack}>
+          <ErrorBoundary>
+            <LeftSideBar players={{}} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <MiddleContent />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <Console />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <NameEntryScreen />
+          </ErrorBoundary>
         </CardPackContext.Provider>
       </RoomContext.Provider>
     </RoomSocketProvider>
