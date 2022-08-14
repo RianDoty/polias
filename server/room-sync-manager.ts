@@ -1,48 +1,48 @@
-import BaseManager from "./base-manager"
-import SyncHost, { Diff } from "./sync"
+import BaseManager from "./base-manager";
+import SyncHost, { Diff } from "./sync";
 
-import type Room from "./room"
-import type User from "./user"
-import { UserTemplate } from "./user"
+import type Room from "./room";
+import type User from "./user";
+import { UserTemplate } from "./user";
 
 export default class RoomSyncManager extends BaseManager {
-    usersSync: SyncHost<'room_users'>
-    stateSync: SyncHost<'room_state'>
-    listSync: SyncHost<'rooms'>
-    optionsSync: SyncHost<'room_options'>
+  usersSync: SyncHost<"room_users">;
+  stateSync: SyncHost<"room_state">;
+  listSync: SyncHost<"rooms">;
+  optionsSync: SyncHost<"room_options">;
 
-    constructor(room: Room) {
-        super(room)
+  constructor(room: Room) {
+    super(room);
 
-        const { io, code } = this;
+    const { io } = this;
 
-        this.usersSync = new SyncHost(io, 'room_users', {})
-        this.stateSync = new SyncHost(io, 'room_state', {
-            state: 'lobby',
-        })
-        this.optionsSync = new SyncHost(io, 'room_options', {
-            'cardPack': 'fruits'
-        })
-        this.listSync = room.manager.syncHost
-    }
+    this.usersSync = new SyncHost(io, "room_users", {});
+    this.stateSync = new SyncHost(io, "room_state", {
+      state: "lobby"
+    });
+    this.optionsSync = new SyncHost(io, "room_options", {
+      cardPack: "fruits"
+    });
+    this.listSync = room.manager.roomListSync;
+  }
 
-    addUser(user: User) {
-        this.usersSync.update({ [user.userID]: user.template() })
-    }
+  addUser(user: User) {
+    this.usersSync.update({ [user.userID]: user.template() });
+  }
 
-    deleteUser(user: User) {
-        this.usersSync.update({ [user.userID]: undefined })
-    }
+  deleteUser(user: User) {
+    this.usersSync.update({ [user.userID]: undefined });
+  }
 
-    updateUser(user: User, pathThenValue: Diff<UserTemplate>) {
-        this.usersSync.update({ [user.userID]: pathThenValue })
-    }
+  updateUser(user: User, pathThenValue: Diff<UserTemplate>) {
+    this.usersSync.update({ [user.userID]: pathThenValue });
+  }
 
-    updateState(key: string, value: any) {
-        this.stateSync.update({ [key]: value })
-    }
+  updateState(key: string, value: any) {
+    this.stateSync.update({ [key]: value });
+  }
 
-    updateList() {
-        this.listSync.update({ [this.code]: this.room.template() })
-    }
+  updateList() {
+    this.listSync.update({ [this.code]: this.room.template() });
+  }
 }

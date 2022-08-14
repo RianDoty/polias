@@ -1,20 +1,19 @@
-import type User from './user'
-import ChatRoomManager from './chat-manager'
-import CardManager from './card-manager'
-import Config from './config'
-import RoomSyncManager from './room-sync-manager'
-import UserManager from './user-manager'
-import Base from './base'
-import type RoomManager from './room-manager'
-import { Namespace, Server, Socket } from 'socket.io'
-import { RoomSocket } from './room-socket-types'
-import { randomCode } from './random-code'
+import type User from "./user";
+import ChatRoomManager from "./chat-manager";
+import CardManager from "./card-manager";
+import Config, { ConfigData } from "./config";
+import RoomSyncManager from "./room-sync-manager";
+import UserManager from "./user-manager";
+import Base from "./base";
+import type RoomManager from "./room-manager";
+import { Namespace, Socket } from "socket.io";
+import { RoomSocket } from "./room-socket-types";
 
 export interface RoomData {
-  code: string
-  name: string
-  host?: Socket
-  password?: string
+  code: string;
+  name: string;
+  host?: Socket;
+  password?: string;
 }
 
 export interface RoomParameters {
@@ -23,39 +22,48 @@ export interface RoomParameters {
 }
 
 export interface RoomTemplate {
-  name: string
-  code: string
-  hostName: string
-  password: string
-  pCount: number
-  pMax: number
+  name: string;
+  code: string;
+  hostName: string;
+  password: string;
+  pCount: number;
+  pMax: number;
 }
+
+const baseConfigData: ConfigData = {
+  aboutToStartTime: {
+    type: "number",
+    value: 10,
+    min: 0,
+    max: 20
+  }
+};
 
 //Class to manage data storage for a room, which hosts games
 class Room extends Base {
-  io!: Namespace
-  users: UserManager
-  cardManager: CardManager
-  chatManager: ChatRoomManager
-  code: string
-  password?: string
-  name: string
-  manager: RoomManager
-  host?: User
-  ioNamespace: Namespace
-  gameConfig: Config
-  syncManager: RoomSyncManager
+  io!: Namespace;
+  users: UserManager;
+  cardManager: CardManager;
+  chatManager: ChatRoomManager;
+  code: string;
+  password?: string;
+  name: string;
+  manager: RoomManager;
+  host?: User;
+  ioNamespace: Namespace;
+  gameConfig: Config<typeof baseConfigData>;
+  syncManager: RoomSyncManager;
 
-  constructor(manager: RoomManager, { code, name, password } : RoomData) {
-    super(manager.io)
+  constructor(manager: RoomManager, { code, name, password }: RoomData) {
+    super(manager.io);
 
-    this.code = code
-    this.name = name
-    this.manager = manager
-    this.password = password
+    this.code = code;
+    this.name = name;
+    this.manager = manager;
+    this.password = password;
 
     const ioNamespace = this.io.server.of(`${this.io.name}${this.code}/`);
-    this.ioNamespace = ioNamespace
+    this.ioNamespace = ioNamespace;
 
     //Password Authentication
     ioNamespace.use((socket: RoomSocket, next: (err?: Error) => void) => {
@@ -63,44 +71,38 @@ class Room extends Base {
 
       if (this.password) {
         if (this.password !== password) {
-          return next(new Error('Invalid Password'))
+          return next(new Error("Invalid Password"));
         }
       }
 
-      next()
-    })
+      next();
+    });
 
-    this.users = new UserManager(this)
+    this.users = new UserManager(this);
 
     this.chatManager = new ChatRoomManager(this);
     this.chatManager.createRooms();
 
-    this.cardManager = new CardManager(this)
+    //this.cardManager = new CardManager(this);
 
-    this.gameConfig = new Config({
-      aboutToStartTime: {
-        type: 'number',
-        value: 10,
-        min: 0,
-        max: 20
-      }
-    });
+    this.gameConfig = new Config(baseConfigData);
+
+    this.gameConfig.set("aboutTotartTime", "greg");
 
     this.onConnection = this.onConnection.bind(this);
-    ioNamespace.on('connection', this.onConnection.bind(this))
+    ioNamespace.on("connection", this.onConnection);
 
-    this.syncManager = new RoomSyncManager(this)
-    this.syncManager.updateList()
+    this.syncManager = new RoomSyncManager(this);
+    this.syncManager.updateList();
   }
 
   onConnection(socket: RoomSocket) {
-    this.users.onConnection(socket)
-    socket.on('disconnect', () => this.onDisconnect(socket))
+    this.users.onConnection(socket);
+    socket.on("disconnect", () => this.onDisconnect(socket));
   }
 
   async onDisconnect(socket: RoomSocket) {
     // const noSocketsControlling = (await this.ioNamespace.in(socket.userID).allSockets()).size === 0;
-
     // if (noSocketsControlling) {
     //   //Every socket authorized to control the user has left
     //   this.onUserLeave(this.getUser(socket))
@@ -108,23 +110,15 @@ class Room extends Base {
   }
 
   template(): RoomTemplate {
-    const { name, code, host, password } = this
+    const { name, code, host, password } = this;
     return {
       name,
       code,
-      hostName: host? host.name : 'Unnamed',
+      hostName: host ? host.name : "Unnamed",
       pCount: this.userCount,
       pMax: 999,
-      password:  password || ''
-    }
-  }
-
-  onUserJoin(user: User) {
-    if (!this.users.userCount) this.setHost(user)
-  }
-
-  onUserLeave(user: User) {
-
+      password: password || ""
+    };
   }
 
   //TODO: replace join and leave with namespaces
@@ -133,10 +127,8 @@ class Room extends Base {
     // if (this.userCount == 1) {
     //   this.assignHost(socket);
     // }
-
     // //Join the socket into the lobby by default
     // this.chatManager.joinSocket(socket, 'lobby');
-
     // //Give the user a random card by default
     // this.cardManager.assignCard(user);
   }
@@ -146,12 +138,10 @@ class Room extends Base {
     // if (!user) return console.warn('Socket with no user disconnected');
     // if (!this.users[user.id]) return console.warn(`user that never existed left: ${user.id.substring(0, 5)}..`); //can't have a socket that never joined leave
     // console.log(`user ${user.id.substring(0, 5)}.. left`)
-
     // //Update users
     // delete this.users[user.id]
     // this.usersSync.delete(user.id);
     // this.updatePCount();
-
     // //If every user is gone, the room shouldn't exist
     // if (this.userCount === 0) {
     //   //Let users join a room for a bit even if it's empty
@@ -160,7 +150,6 @@ class Room extends Base {
     //     this.destroy();
     //   }, 20000)
     // }
-
     // //The host leaving means we have to change things up
     // if (this.isHost(socket) && this.userCount > 0) {
     //   //Pick a 'random' user
@@ -170,7 +159,7 @@ class Room extends Base {
   }
 
   get userCount() {
-    return this.users.userCount
+    return this.users.userCount;
   }
 
   // updateList(prop: string, value: any) {
@@ -180,12 +169,12 @@ class Room extends Base {
 
   // Host
   isHost(user: User): boolean {
-    return false //TODO: Check for this
+    return false; //TODO: Check for this
   }
 
   setHost(user: User) {
-    this.host = user
-    this.syncManager.updateList()
+    this.host = user;
+    this.syncManager.updateList();
   }
 
   destroy() {
@@ -193,7 +182,7 @@ class Room extends Base {
   }
 
   findUser(userID: string) {
-    return this.users.findUser(userID)
+    return this.users.findUser(userID);
   }
 }
 

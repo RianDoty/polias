@@ -1,8 +1,17 @@
 {
-    "extends": "@tsconfig/node16/tsconfig.json",
-    "compilerOptions": {
-      "outDir": "dist"
-    },
-    "include": ["server", "src/room-socket-types.d.ts", "src/socket-types.d.ts"],
-    "exclude": ["node_modules", "src"]
-  }
+  "extends": "@tsconfig/node16/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "ES6",
+    "moduleResolution": "node"
+  },
+  "include": [
+    "server",
+    "src/room-socket-types.d.ts",
+    "src/socket-types.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "src"
+  ]
+}

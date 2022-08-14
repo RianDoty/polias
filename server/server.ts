@@ -15,6 +15,7 @@ const nsp: MyServer = io.of("/");
 
 const MyRoomManager = new RoomManager(nsp);
 
+//Base server for creating rooms
 nsp.on("connection", (socket: MySocket) => {
   //Debug
   console.log("connection");
@@ -23,12 +24,9 @@ nsp.on("connection", (socket: MySocket) => {
     console.log(`[S] ${name}: ${args}`);
   });
 
-  //Username
-  socket.on("username", (username: string) => {
-    socket.data.username = username;
-  });
-
-  socket.on("room_create", (roomParams: RoomParameters) => {
+  socket.on("room_create", function onCreateRoomRequest(
+    roomParams: RoomParameters
+  ) {
     try {
       console.log("creating a room...");
       if (roomParams === undefined || typeof roomParams !== "object")
