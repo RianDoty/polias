@@ -29,6 +29,7 @@ class Config<C extends {[key: string]: ConstraintType<boolean | string | number>
     this._constraints = data
     Object.entries(data).forEach(([k, v]) => {
       super.set(k, v.default)
+      Object.seal(v)
     });
 
     Object.seal(this._constraints)
