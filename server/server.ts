@@ -21,7 +21,7 @@ nsp.on("connection", (socket: MySocket) => {
   console.log("connection");
 
   socket.onAny((name: string, ...args: any[]) => {
-    console.log(`[S] ${name}: ${args}`);
+    console.log(`[S] ${name}:`,args);
   });
 
   socket.on("room_create", function onCreateRoomRequest(
