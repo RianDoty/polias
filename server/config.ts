@@ -1,71 +1,62 @@
-const clamp = (n: number, min: number, max: number) =>
-  Math.max(Math.min(n, max), min);
+const clamp = (n: number, min?: number, max?: number) => Math.max(Math.min(n, max || 9999999999), min || -9999999999);
 
-type ConfigEntry =
-  | {
-      type: "number";
-      value: number;
-      min: number;
-      max: number;
-    }
-  | {
-      type: "string";
-      value: string;
-    };
-
-export type ConfigData = { [key: string]: ConfigEntry };
-
-class ConfigTrash<C extends ConfigData> {
-  settings: C;
-
-  constructor(configData: C) {
-    this.settings = configData;
-  }
-
-  set<K extends keyof C>(configName: K, value: C[K]["value"]) {
-    const configItem = this.settings[configName];
-    if (!configItem) throw Error(`Invalid config item: ${configName}`);
-    switch (configItem.type) {
-      case "number":
-        if (typeof value !== "number")
-          throw Error(
-            "Number config cannot be set to anything other than a number!"
-          );
-        configItem.value = clamp(value, configItem.min, configItem.max);
-        break;
-
-      case "string":
-        if (typeof value !== "string")
-          throw Error(
-            "String config cannot be set to a value other than a string!"
-          );
-        configItem.value = value;
-        break;
-    }
-  }
-
-  get(configName: string) {
-    return this.settings[configName].value;
-  }
+interface BoolConstraint {
+  type: "boolean"
+  default: boolean
 }
 
-interface ConfigConstraints {
-  [key: string]:
-    | {
-        default: number;
-        min?: number;
-        max?: number;
-      }
-    | {
-        default: string;
-      };
+interface StringConstraint {
+  type: "string"
+  default: string
 }
 
-class Config extends Map {
-  constructor(constraints: ConfigConstraints) {
+interface NumberConstraint {
+  type: "number"
+  default: number
+  min?: number
+  max?: number
+}
+
+type ConstraintType<T> = T extends number ? NumberConstraint : T extends string ? StringConstraint : T extends boolean ? BoolConstraint : never
+type Constraint = BoolConstraint | StringConstraint | NumberConstraint
+type ExpectedType<C extends Constraint> = C['type'] extends 'string' ? string : C['type'] extends 'number' ? number : C['type'] extends 'boolean' ? boolean : never
+
+class Config<C extends {[key: string]: ConstraintType<boolean | string | number>}> extends Map {
+  private _constraints: C
+
+  constructor(data: C) {
     super();
-    Object.entries(constraints).forEach((k, v) => {});
+    this._constraints = data
+    Object.entries(data).forEach(([k, v]) => {
+      super.set(k, v.default)
+    });
+
+    Object.seal(this._constraints)
   }
+
+  private _constrain<C extends Constraint>(constraint: C, value: ExpectedType<C>): ExpectedType<C> {
+    function verify(val: any): val is ExpectedType<C> {
+      return typeof val === constraint.type
+    }
+
+    switch(constraint.type) {
+      case 'number':
+        if (typeof value !== 'number') throw Error(`Expected value to be a number, got: ${value}`)
+        const clamped = clamp(value, constraint.min, constraint.max)
+        if (!verify(clamped)) throw Error(`Invalid return from clamp: Expected number, got: ${typeof clamped}`)
+        return clamped
+    }
+
+    return value
+  }
+
+  set<K extends keyof C, V extends ExpectedType<C[K]>>(key: K, value: V): this {
+    const constraint = this._constraints[key]
+    
+    return super.set(key, this._constrain(constraint, value))
+  }
+
+  get<K extends keyof C>(key: K): ExpectedType<C[K]> {return super.get(key)}
 }
 
 export default Config;
