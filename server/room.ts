@@ -1,7 +1,7 @@
 import type User from "./user";
 import ChatRoomManager from "./chat-manager";
 import CardManager from "./card-manager";
-import Config, { ConfigData } from "./config";
+import Config from "./config";
 import RoomSyncManager from "./room-sync-manager";
 import UserManager from "./user-manager";
 import Base from "./base";
@@ -30,20 +30,20 @@ export interface RoomTemplate {
   pMax: number;
 }
 
-const baseConfigData: ConfigData = {
+const baseConfigData = {
   aboutToStartTime: {
-    type: "number",
-    value: 10,
+    type: "number" as const,
+    default: 10,
     min: 0,
     max: 20
   }
-};
+} 
 
 //Class to manage data storage for a room, which hosts games
 class Room extends Base {
   io!: Namespace;
   users: UserManager;
-  cardManager: CardManager;
+  //cardManager: CardManager;
   chatManager: ChatRoomManager;
   code: string;
   password?: string;
@@ -86,8 +86,6 @@ class Room extends Base {
     //this.cardManager = new CardManager(this);
 
     this.gameConfig = new Config(baseConfigData);
-
-    this.gameConfig.set("aboutTotartTime", "greg");
 
     this.onConnection = this.onConnection.bind(this);
     ioNamespace.on("connection", this.onConnection);
