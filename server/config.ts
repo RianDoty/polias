@@ -20,8 +20,9 @@ interface NumberConstraint {
 type ConstraintType<T> = T extends number ? NumberConstraint : T extends string ? StringConstraint : T extends boolean ? BoolConstraint : never
 type Constraint = BoolConstraint | StringConstraint | NumberConstraint
 type ExpectedType<C extends Constraint> = C['type'] extends 'string' ? string : C['type'] extends 'number' ? number : C['type'] extends 'boolean' ? boolean : never
+type ConstraintData = {[key: string]: Constraint}
 
-class Config<C extends {[key: string]: ConstraintType<boolean | string | number>}> extends Map {
+class Config<C extends ConstraintData> extends Map {
   private _constraints: C
 
   constructor(data: C) {
@@ -54,7 +55,7 @@ class Config<C extends {[key: string]: ConstraintType<boolean | string | number>
   set<K extends keyof C, V extends ExpectedType<C[K]>>(key: K, value: V): this {
     const constraint = this._constraints[key]
     
-    return super.set(key, this._constrain(constraint, value))
+    return super.set(key, this._constrain(constraint, value));
   }
 
   get<K extends keyof C>(key: K): ExpectedType<C[K]> {return super.get(key)}
