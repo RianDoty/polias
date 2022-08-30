@@ -1,16 +1,16 @@
 import { v4 as uuidv4 } from "uuid";
-import BaseRoomStructure from './base-room-structure';
+import BaseRoomStructure from "./base-room-structure";
 import type Room from "./room";
 
 const maxNicknameLength = 20;
 
 export interface UserTemplate {
   //{ name, userID, isHost, ready, role }
-  name: string
-  userID: string
-  isHost: boolean
-  ready: boolean
-  role: string
+  name: string;
+  userID: string;
+  isHost: boolean;
+  ready: boolean;
+  role: string;
 }
 
 //Represents a Socket inside of a Room
@@ -22,7 +22,10 @@ class User extends BaseRoomStructure {
   readonly room!: Room;
   role!: string;
 
-  constructor(room: Room, { userID = uuidv4(), name = "Unknown" }: { userID?: string, name: string }) {
+  constructor(
+    room: Room,
+    { userID = uuidv4(), name = "Unknown" }: { userID?: string; name: string }
+  ) {
     super(room);
 
     Object.assign(this, {
@@ -30,12 +33,12 @@ class User extends BaseRoomStructure {
       userID,
       ready: false,
       inGame: false,
-      role: "Chillin'",
-    })
+      role: "Chillin'"
+    });
   }
 
   getSockets() {
-    return
+    return;
   }
 
   setNickname(nickname: string) {
@@ -54,20 +57,15 @@ class User extends BaseRoomStructure {
     }
   }
 
-  template(): UserTemplate {
-    const {
-      name,
-      userID,
-      ready,
-      role
-    } = this;
-
-    const isHost = this.isHost()
-    return { name, userID, isHost, ready, role };
+  isHost() {
+    return this === this.room.users.getHost();
   }
 
-  isHost() {
-    return this.room.isHost(this);
+  template(): UserTemplate {
+    const { name, userID, ready, role } = this;
+
+    const isHost = this.isHost();
+    return { name, userID, isHost, ready, role };
   }
 
   hasAdmin() {
@@ -76,4 +74,4 @@ class User extends BaseRoomStructure {
   }
 }
 
-export default User
+export default User;

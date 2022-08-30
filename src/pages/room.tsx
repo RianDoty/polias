@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 //import io, { ManagerOptions, SocketOptions } from "socket.io-client";
 
 //Game-related stuff
@@ -18,32 +18,42 @@ import { RoomSocketProvider } from "../contexts/room-socket";
 import useSync from "../hooks/sync";
 import useSocket from "../hooks/socket";
 import ErrorBoundary from "../components/error-boundary";
+import { getSyncContext } from "../contexts/sync-context";
 
 export default function RoomMain({
   params: { code }
 }: RouteComponentProps<{ code: string }>) {
   const socket = useSocket(`/${code}/`, { autoConnect: false });
+  const session = useState(localStorage.getItem(code));
+  const OptionsContext = useMemo(() => getSyncContext(code, "room_options"), [
+    code
+  ]);
 
-  const [loading, options] = useSync(`/${code}/`, "room_options");
+  const optionsSync = useSync(code, "room_options");
+  const [optionsLoading, options] = optionsSync;
 
   return (
-    <RoomSocketProvider value={socket}>
-      <RoomContext.Provider value={code}>
-        <CardPackContext.Provider value={loading ? null : options.cardPack}>
-          <ErrorBoundary>
-            <LeftSideBar players={{}} />
-          </ErrorBoundary>
-          <ErrorBoundary>
-            <MiddleContent />
-          </ErrorBoundary>
-          <ErrorBoundary>
-            <Console />
-          </ErrorBoundary>
-          <ErrorBoundary>
-            <NameEntryScreen />
-          </ErrorBoundary>
-        </CardPackContext.Provider>
-      </RoomContext.Provider>
-    </RoomSocketProvider>
+    <OptionsContext.Provider value={optionsSync}>
+      <RoomSocketProvider value={socket}>
+        <RoomContext.Provider value={code}>
+          <CardPackContext.Provider
+            value={optionsLoading ? [true] : [false, options.cardPack]}
+          >
+            <ErrorBoundary>
+              <LeftSideBar players={{}} />
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <MiddleContent />
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <Console />
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <NameEntryScreen />
+            </ErrorBoundary>
+          </CardPackContext.Provider>
+        </RoomContext.Provider>
+      </RoomSocketProvider>
+    </OptionsContext.Provider>
   );
 }

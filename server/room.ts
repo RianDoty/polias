@@ -1,5 +1,4 @@
 import type User from "./user";
-import ChatRoomManager from "./chat-manager";
 import CardManager from "./card-manager";
 import Config from "./config";
 import RoomSyncManager from "./room-sync-manager";
@@ -8,6 +7,7 @@ import Base from "./base";
 import type RoomManager from "./room-manager";
 import { Namespace, Socket } from "socket.io";
 import { RoomSocket } from "./room-socket-types";
+import { EventEmitter } from "events";
 
 export interface RoomData {
   code: string;
@@ -37,14 +37,12 @@ const baseConfigData = {
     min: 0,
     max: 20
   }
-} 
+};
 
 //Class to manage data storage for a room, which hosts games
 class Room extends Base {
   io!: Namespace;
   users: UserManager;
-  //cardManager: CardManager;
-  chatManager: ChatRoomManager;
   code: string;
   password?: string;
   name: string;
@@ -53,6 +51,7 @@ class Room extends Base {
   ioNamespace: Namespace;
   gameConfig: Config<typeof baseConfigData>;
   syncManager: RoomSyncManager;
+  events: EventEmitter;
 
   constructor(manager: RoomManager, { code, name, password }: RoomData) {
     super(manager.io);
@@ -61,9 +60,12 @@ class Room extends Base {
     this.name = name;
     this.manager = manager;
     this.password = password;
+    this.events = new EventEmitter();
 
     const ioNamespace = this.io.server.of(`${this.io.name}${this.code}/`);
     this.ioNamespace = ioNamespace;
+
+    this.users = new UserManager(this);
 
     //Password Authentication
     ioNamespace.use((socket: RoomSocket, next: (err?: Error) => void) => {
@@ -78,96 +80,32 @@ class Room extends Base {
       next();
     });
 
-    this.users = new UserManager(this);
-
-    this.chatManager = new ChatRoomManager(this);
-    this.chatManager.createRooms();
-
-    //this.cardManager = new CardManager(this);
-
     this.gameConfig = new Config(baseConfigData);
-
-    this.onConnection = this.onConnection.bind(this);
-    ioNamespace.on("connection", this.onConnection);
 
     this.syncManager = new RoomSyncManager(this);
     this.syncManager.updateList();
   }
 
-  onConnection(socket: RoomSocket) {
-    this.users.onConnection(socket);
-    socket.on("disconnect", () => this.onDisconnect(socket));
-  }
-
-  async onDisconnect(socket: RoomSocket) {
-    // const noSocketsControlling = (await this.ioNamespace.in(socket.userID).allSockets()).size === 0;
-    // if (noSocketsControlling) {
-    //   //Every socket authorized to control the user has left
-    //   this.onUserLeave(this.getUser(socket))
-    // }
-  }
-
   template(): RoomTemplate {
-    const { name, code, host, password } = this;
+    const { name, code, host, password, userCount } = this;
     return {
       name,
       code,
       hostName: host ? host.name : "Unnamed",
-      pCount: this.userCount,
+      pCount: userCount,
       pMax: 999,
       password: password || ""
     };
-  }
-
-  //TODO: replace join and leave with namespaces
-  join(socket: Socket) {
-    //If the user is the only user in the room, give it the Host role
-    // if (this.userCount == 1) {
-    //   this.assignHost(socket);
-    // }
-    // //Join the socket into the lobby by default
-    // this.chatManager.joinSocket(socket, 'lobby');
-    // //Give the user a random card by default
-    // this.cardManager.assignCard(user);
-  }
-
-  leave(socket: Socket) {
-    // const { user } = socket
-    // if (!user) return console.warn('Socket with no user disconnected');
-    // if (!this.users[user.id]) return console.warn(`user that never existed left: ${user.id.substring(0, 5)}..`); //can't have a socket that never joined leave
-    // console.log(`user ${user.id.substring(0, 5)}.. left`)
-    // //Update users
-    // delete this.users[user.id]
-    // this.usersSync.delete(user.id);
-    // this.updatePCount();
-    // //If every user is gone, the room shouldn't exist
-    // if (this.userCount === 0) {
-    //   //Let users join a room for a bit even if it's empty
-    //   this.noPlayersTimeout = setTimeout(() => {
-    //     if (this.userCount !== 0) return;
-    //     this.destroy();
-    //   }, 20000)
-    // }
-    // //The host leaving means we have to change things up
-    // if (this.isHost(socket) && this.userCount > 0) {
-    //   //Pick a 'random' user
-    //   const randomUser = Object.values(this.users)[0];
-    //   this.assignHost(randomUser);
-    // }
   }
 
   get userCount() {
     return this.users.userCount;
   }
 
-  // updateList(prop: string, value: any) {
-  //   //Updates the player list for players browsing rooms
-  //   this.roomListSync.update(this.code, prop, value);
-  // }
-
   // Host
   isHost(user: User): boolean {
-    return false; //TODO: Check for this
+    if (!this.host) return false;
+    return this.host.userID === user.userID;
   }
 
   setHost(user: User) {
@@ -181,6 +119,10 @@ class Room extends Base {
 
   findUser(userID: string) {
     return this.users.findUser(userID);
+  }
+
+  on(event: string | symbol, listener: (...args: any[]) => void) {
+    this.events.on(event, listener);
   }
 }
 

@@ -1,6 +1,6 @@
 import Base from "./base";
 import Room from "./room";
-import SyncHost from "./sync";
+import { SyncHost } from "./sync";
 import { unregisterCode } from "./random-code";
 import type { RoomData } from "./room";
 import type { Server } from "./socket-types";

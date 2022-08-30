@@ -1,11 +1,16 @@
-import { Namespace } from "socket.io";
+import { nextTick } from "process";
+import { Namespace, Socket } from "socket.io";
 import Base from "./base";
-import { RoomTemplate } from "./room";
-import { UserTemplate } from "./user";
+import Room, { RoomTemplate } from "./room";
+import User, { UserTemplate } from "./user";
+
+//Clones using JSON to avoid tricky things that
+//WebSockets wouldn't be able to transfer anyways.
+const JSONClone = (tbl: object) => JSON.parse(JSON.stringify(tbl));
 
 export interface SyncServerEvents<k extends keyof SyncKeywords> {
   sync_data: (data: SyncKeywords[k]) => void;
-  sync_diff: (diff: SyncKeywords[k]) => void;
+  sync_diff: (diff: Diff<SyncKeywords[k]>) => void;
 }
 
 //TODO: Fix this, this is not what it should be
@@ -70,11 +75,13 @@ class SyncHost<V extends keyof SyncKeywords> extends Base {
     const nsp = io.server.of(`${io.name}sync/${keyword}/`);
     this.nsp = nsp;
 
-    nsp.on("connect", (socket) => {
-      socket.emit("sync_data", this.data);
-    });
+    nsp.on("connect", (socket) => this.sendData(socket));
 
     console.log(`initiating sync ${io.name}sync/${keyword}/`);
+  }
+
+  sendData(socket: Socket, data?: SyncKeywords[V]) {
+    socket.emit("sync_data", data ?? this.data);
   }
 
   update(diff: Diff<SyncKeywords[V]>) {
@@ -83,10 +90,56 @@ class SyncHost<V extends keyof SyncKeywords> extends Base {
     try {
       patch(data, diff);
       nsp.emit(`sync_diff`, diff);
-    } catch {
+    } catch (err) {
       console.error(`Error in diff`);
+      console.error(err);
     }
   }
 }
 
-export default SyncHost;
+// Like a SyncHost, but different for each user.
+// Use update() if you dare
+class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
+  readonly individualData: Map<string, SyncKeywords[V]>;
+  constructor(room: Room, keyword: V, def: SyncKeywords[V]) {
+    super(room.io, keyword, def);
+
+    this.io.use((socket, next) => {
+      const sessionId: string | undefined = socket.handshake.auth.sessionId;
+      if (typeof sessionId !== "string")
+        return next(Error("Socket must have a valid session ID!"));
+
+      const user = room.users.findUser(sessionId);
+      if (!user)
+        return next(Error("Provided session ID does not exist on server!"));
+
+      socket.data.userId = user.userID;
+    });
+
+    this.individualData = new Map();
+  }
+
+  sendData(socket: Socket, data?: SyncKeywords[V]) {
+    if (data) return super.sendData(socket, data);
+
+    const userId = socket.data.userId;
+
+    if (!this.individualData.has(userId))
+      this.individualData.set(userId, JSONClone(this.data));
+    super.sendData(socket, this.individualData.get(userId));
+  }
+
+  updateUser(user: User, diff: Diff<SyncKeywords[V]>) {
+    const data = this.individualData.get(user.userID) ?? {};
+
+    try {
+      patch(data, diff);
+      this.io.to(user.userID).emit("sync_diff", diff);
+    } catch (err) {
+      console.error("error in diff");
+      console.error(err);
+    }
+  }
+}
+
+export { SyncHost, PersonalSyncHost };

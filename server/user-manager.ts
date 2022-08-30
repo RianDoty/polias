@@ -1,4 +1,4 @@
-//Manages the creation, updating, etc. of sessions and users
+//Manages the creation of users and tracking of sessions
 import User from "./user";
 import BaseManager from "./base-manager";
 import { v4 as uuid } from "uuid";
@@ -7,6 +7,7 @@ import type { RoomSocket } from "./room-socket-types";
 
 export default class UserManager extends BaseManager {
   users: Map<string, User>;
+  host?: User;
 
   constructor(room: Room) {
     super(room);
@@ -17,10 +18,11 @@ export default class UserManager extends BaseManager {
       //Give the socket a user
       const { sessionID } = socket.handshake.auth;
 
+      //If the socket has a session
       if (sessionID) {
         //Look up an existing user, if it doesn't exist, throw an error
         const existingUser = this.users.get(sessionID);
-        if (!existingUser) next(new Error("Invalid SessionID"));
+        if (!existingUser) return next(new Error("Invalid SessionID"));
 
         socket.data.user = existingUser;
         socket.data.sessionID = sessionID;
@@ -28,35 +30,53 @@ export default class UserManager extends BaseManager {
       }
 
       //Make a new user and session
-      const { username } = socket.handshake.auth;
-      const newUser = new User(this.room, { name: username });
+      try {
+        const { username } = socket.handshake.auth;
+        const newUser = new User(this.room, { name: username });
 
-      socket.data.user = newUser;
-      socket.data.sessionID = uuid();
-      next();
+        socket.data.user = newUser;
+        socket.data.sessionID = uuid();
+        next();
+      } catch (err) {
+        if (err instanceof Error) next(err);
+      }
+    });
+
+    this.io.on("connection", (socket: RoomSocket) => {
+      try {
+        const { user } = socket.data;
+        if (!user)
+          throw Error(
+            "Socket should have a User before being registered by the UserManager!"
+          );
+        const { userID } = user;
+
+        const { sessionID: sessionId } = socket.data;
+        if (!sessionId) throw Error("Socket expected to have a session ID!");
+
+        socket.join(sessionId);
+        this.io.to(sessionId).emit("session", { sessionID: sessionId, userID });
+
+        if (!this.users.has(sessionId)) {
+          //A new user has joined!
+          this.users.set(sessionId, user);
+          this.room.syncManager.addUser(user);
+        }
+      } catch (err) {
+        socket.disconnect();
+        console.error("Error while socket join:");
+        console.error(err);
+      }
     });
   }
 
-  onConnection(socket: RoomSocket) {
-    const { user } = socket.data;
-    if (!user)
-      throw Error(
-        "Socket should have a User before being registered by the UserManager!"
-      );
-    const { userID } = user;
-
-    const { sessionID } = socket.data;
-    if (!sessionID) throw Error("Socket expected to have a session ID!");
-
-    socket.emit("session", { sessionID, userID });
-    socket.join(userID);
-
-    this.users.set(sessionID, user);
-    this.room.syncManager.addUser(user);
+  getHost(): User | undefined {
+    //Return the pre-set host or the first user
+    return this.host || this.users.values().next().value;
   }
 
-  findUser(userID: string) {
-    return this.users.get(userID);
+  findUser(sessionId: string): User | undefined {
+    return this.users.get(sessionId);
   }
 
   get userCount(): number {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
-import UserContext from "../../contexts/user";
-import socket from '../../socket'
+import { getSyncContext } from "../../contexts/sync-context";
+import socket from "../../socket";
 
 import "../../styles/action-board.css";
 
@@ -11,14 +11,15 @@ const ActionGroup = ({ name, children }) => (
   </div>
 );
 
+const UserContext = getSyncContext();
 const SwapSpectatePlayButton = () => {
   const user = useContext(UserContext);
-  const {playing} = user;
+  const { playing } = user;
 
   const onClick = (e) => {
     //Toggle whether or not the player is playing or not
     const newState = !playing;
-    user.update('playing', newState);
+    user.update("playing", newState);
     socket.emit("toggle-ready", newState);
   };
 
@@ -33,22 +34,22 @@ const StartGameButton = () => {
   // const [disabled, setDisabled] = useState(false);
   // const [debug, setDebug] = useState();
   // const { state } = useRoom(useContext(RoomContext));
-  
+
   // useEffect(()=>{
   //   setDisabled(state !== 'lobby')
   // },[state])
-  
+
   // const onClick = (e) => {
   //   //Signal the server to start the game
   //   socket.emit('game_start')
   // }
-  
+
   return (
     <></>
     // <button className='button' onClick={onClick}  disabled={disabled}>
     //   Start Game
     // </button>
-  )
+  );
 };
 
 const UserGroup = () => (
@@ -61,11 +62,12 @@ const HostGroup = () => {
   const user = useContext(UserContext);
   const show = user.host;
 
-  if (show) return (
-    <ActionGroup name="Host">
-      <StartGameButton/>
-    </ActionGroup>)
-  ;
+  if (show)
+    return (
+      <ActionGroup name="Host">
+        <StartGameButton />
+      </ActionGroup>
+    );
   return null; //If the group isn't supposed to be shown
 };
 

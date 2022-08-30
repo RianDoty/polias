@@ -21,7 +21,7 @@ nsp.on("connection", (socket: MySocket) => {
   console.log("connection");
 
   socket.onAny((name: string, ...args: any[]) => {
-    console.log(`[S] ${name}:`,args);
+    console.log(`[S] ${name}:`, args);
   });
 
   socket.on("room_create", function onCreateRoomRequest(
@@ -31,10 +31,8 @@ nsp.on("connection", (socket: MySocket) => {
       console.log("creating a room...");
       if (roomParams === undefined || typeof roomParams !== "object")
         throw Error("Invalid RoomData");
-      if (!socket.data.username) throw Error("Invalid username");
 
       const roomData: RoomData = Object.assign(roomParams, {
-        host: socket,
         code: randomCode(4)
       });
 
@@ -70,7 +68,7 @@ if (process.env.NODE_ENV === "production") {
   //When NODE_ENV is production, serve the client-side in a static package
   port = process.env.PORT || 3000;
   app.use(express.static(path.join(__dirname, "../build")));
-  app.get("*", (request: Request, response: Response) => {
+  app.get("*", (_: any, response: Response) => {
     response.sendFile(path.join(__dirname, "../build", "index.html"));
   });
 } else {

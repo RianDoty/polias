@@ -168,7 +168,6 @@ const RoomList = () => {
   return <div className="dashboard-list">{e}</div>;
 };
 
-socket.on("connect", () => {});
 //Page
 export default function Home() {
   const [username, setUsername] = useUsername();
@@ -185,7 +184,10 @@ export default function Home() {
       setConnected(false);
       console.log("Connection Error:", e.message);
     },
-    room_send: (code) => setLocation(`/game/${code}`)
+    room_send: (code) => {
+      setLocation(`/game/${code}`);
+      socket.disconnect();
+    }
   });
 
   let middleSection;

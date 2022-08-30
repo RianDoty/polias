@@ -1,57 +1,43 @@
-import React, { useEffect,  useContext } from 'react';
-import useSync from '../../hooks/sync';
-import UserContext from '../../contexts/user';
-import RoomContext from '../../contexts/room';
-import Avatar from './avatar'
+import React, { useContext } from "react";
+import useSync from "../../hooks/sync";
+import RoomContext from "../../contexts/room";
+import Avatar from "./avatar";
 
-import socket from '../../socket'
+const UserInfo = ({ user: { name = "Unknown", role = "Chillin'" } }) => {
+  return (
+    <div className="user-info">
+      <div>{name}</div>
+      <div className="muted">{role}</div>
+    </div>
+  );
+};
 
-const userTemplate = (user, socket) => ({
-  name: user.name,
-  socketId: socket.id,
-  cardId: user.cardId,
-  role: (user.playing ? 'Chillin\'' : 'Ready')
-})
+const UserEntry = ({ user, me }) => {
+  return (
+    <div className={`user-entry${me ? " this-user" : ""}`} key={user.name}>
+      <Avatar user={user} />
+      <UserInfo user={user} />
+    </div>
+  );
+};
 
 const UserList = () => {
   const code = useContext(RoomContext);
-  const user = useContext(UserContext);
-  const [users, updateUsers] = useSync(`room users ${code}`, {[user.id]: userTemplate(user, socket)}, true);
+  const [loading, users, updateUsers] = useSync(code, "room_users");
 
-  // const template = userTemplate(user, socket)
-  // useEffect(() => {
-  //   updateUsers(u => {
-  //     if (!user.id) return u;
-  //     u[user.id] = template
-  //     return u
-  //   })
-  // }, Object.values(template))
+  if (loading)
+    return (
+      <div className="user-list">
+        <UserEntry user={null} me={true} />
+      </div>
+    );
 
-  const entries = Object.values(users).map(u => (<UserEntry user={u} me={u.socketId === socket.id}/>))
-  
-  return (
-  <div className='user-list'>
-      {entries}
-  </div>
-  )
-}
+  const thisUserId = null; //TODO: grab session
+  const entries = Object.values(users).map((u) => (
+    <UserEntry user={u} me={u.userID === thisUserId} />
+  ));
 
-const UserEntry = ({user, me}) => {
-  return (
-    <div className={`user-entry${me ? ' this-user' : ''}`} key={user.name}>
-      <Avatar user={user}/>
-      <UserInfo user={user}/>
-    </div>
-  )
-}
+  return <div className="user-list">{entries}</div>;
+};
 
-const UserInfo = ({user: {name='Unknown', role='Chillin\''}}) => {
-  return (
-    <div className='user-info'>
-      <div>{name}</div>
-      <div className='muted'>{role}</div>
-    </div>
-  )
-}
-
-export default UserList
+export default UserList;

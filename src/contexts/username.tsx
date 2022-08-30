@@ -12,8 +12,8 @@ const errOnCall = () => {
 type stringState = [string, Dispatch<SetStateAction<string>>];
 
 const UsernameContext = createContext<stringState>(["", errOnCall]);
-export const UsernameProvider = ({ value = "", children }) => (
-  <UsernameContext.Provider value={useState(value)}>
+export const UsernameProvider = ({ def = "", children }) => (
+  <UsernameContext.Provider value={useState(def)}>
     {children}
   </UsernameContext.Provider>
 );

@@ -1,5 +1,5 @@
 import BaseManager from "./base-manager";
-import SyncHost, { Diff } from "./sync";
+import { Diff, SyncHost } from "./sync";
 
 import type Room from "./room";
 import type User from "./user";

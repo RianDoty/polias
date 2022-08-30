@@ -2,11 +2,8 @@
 import React, { useState, useContext } from "react";
 import socket from "../../socket";
 
-import UserContext from "../../contexts/user";
-
 const NameEntryPrompt = () => {
   const [content, setContent] = useState("");
-  const user = useContext(UserContext);
 
   function onSubmit(e) {
     e.preventDefault();
@@ -14,7 +11,6 @@ const NameEntryPrompt = () => {
     //If the name contains no content other than whitespace
     if (!content.replace(/\s/g, "").length) return setContent("");
 
-    user.update("name", content);
     socket.emit("set nickname", content);
   }
 
@@ -31,9 +27,7 @@ const NameEntryPrompt = () => {
 };
 
 const NameEntryScreen = () => {
-  const user = useContext(UserContext);
-
-  const active = !user.name;
+  const active = false;
 
   if (active)
     return (
