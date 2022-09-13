@@ -1,5 +1,5 @@
-import React from 'react'
+import React from "react";
 
-const CardPackContext = React.createContext()
+const CardPackContext = React.createContext<[true] | [false, string]>([true]);
 
-export default CardPackContext
+export default CardPackContext;

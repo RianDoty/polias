@@ -27,15 +27,15 @@ export default class RoomSyncManager extends BaseManager {
   }
 
   addUser(user: User) {
-    this.usersSync.update({ [user.userID]: user.template() });
+    this.usersSync.update({ [user.userId]: user.template() });
   }
 
   deleteUser(user: User) {
-    this.usersSync.update({ [user.userID]: undefined });
+    this.usersSync.update({ [user.userId]: undefined });
   }
 
   updateUser(user: User, pathThenValue: Diff<UserTemplate>) {
-    this.usersSync.update({ [user.userID]: pathThenValue });
+    this.usersSync.update({ [user.userId]: pathThenValue });
   }
 
   updateState(key: string, value: any) {

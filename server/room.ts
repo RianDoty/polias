@@ -1,12 +1,11 @@
 import type User from "./user";
-import CardManager from "./card-manager";
+import debugNSP from "./nspdebug";
 import Config from "./config";
 import RoomSyncManager from "./room-sync-manager";
 import UserManager from "./user-manager";
 import Base from "./base";
 import type RoomManager from "./room-manager";
 import { Namespace, Socket } from "socket.io";
-import { RoomSocket } from "./room-socket-types";
 import { EventEmitter } from "events";
 
 export interface RoomData {
@@ -32,16 +31,15 @@ export interface RoomTemplate {
 
 const baseConfigData = {
   aboutToStartTime: {
-    type: "number" as const,
+    type: "number",
     default: 10,
     min: 0,
     max: 20
   }
-};
+} as const;
 
 //Class to manage data storage for a room, which hosts games
 class Room extends Base {
-  io!: Namespace;
   users: UserManager;
   code: string;
   password?: string;
@@ -63,12 +61,13 @@ class Room extends Base {
     this.events = new EventEmitter();
 
     const ioNamespace = this.io.server.of(`${this.io.name}${this.code}/`);
+    debugNSP(ioNamespace);
     this.ioNamespace = ioNamespace;
 
     this.users = new UserManager(this);
 
     //Password Authentication
-    ioNamespace.use((socket: RoomSocket, next: (err?: Error) => void) => {
+    ioNamespace.use((socket: Socket, next: (err?: Error) => void) => {
       const { password } = socket.handshake.auth;
 
       if (this.password) {
@@ -83,7 +82,6 @@ class Room extends Base {
     this.gameConfig = new Config(baseConfigData);
 
     this.syncManager = new RoomSyncManager(this);
-    this.syncManager.updateList();
   }
 
   template(): RoomTemplate {
@@ -105,7 +103,7 @@ class Room extends Base {
   // Host
   isHost(user: User): boolean {
     if (!this.host) return false;
-    return this.host.userID === user.userID;
+    return this.host.userId === user.userId;
   }
 
   setHost(user: User) {

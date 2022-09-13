@@ -56,8 +56,7 @@ export default function useSync<k extends keyof SyncKeywords>(
     setLoading(false);
   };
 
-  //Stores are immutable, but it might be a total performance nightmare later
-  //idk
+  //Stores are immutable!
   const onDiff = (diff: Partial<SyncKeywords[k]>) =>
     setStore((store: SyncKeywords[k]) => patch(JSONClone(store), diff));
 

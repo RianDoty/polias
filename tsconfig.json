@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "target": "ES6",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "resolveJsonModule": true
   },
   "include": [
     "server",

@@ -3,13 +3,13 @@ import Room from "./room";
 import { SyncHost } from "./sync";
 import { unregisterCode } from "./random-code";
 import type { RoomData } from "./room";
-import type { Server } from "./socket-types";
+import { Namespace } from "socket.io";
 
 class RoomManager extends Base {
   rooms: Map<string, Room>;
   roomListSync: SyncHost<"rooms">;
 
-  constructor(io: Server) {
+  constructor(io: Namespace) {
     super(io);
 
     this.rooms = new Map();

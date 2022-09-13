@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import useSync from "../../hooks/sync";
 import Avatar from "./avatar";
-import useSession from "../../contexts/session";
-
 import RoomContext from "../../contexts/room";
 import useSocket from "../../hooks/socket";
+import type { UserTemplate } from "../../../server/user";
 
 function randomInt(max = 0, min = 0) {
   return min + Math.floor(Math.random() * max);
@@ -13,6 +12,102 @@ function randomInt(max = 0, min = 0) {
 function randomFromArray(arr) {
   return arr[randomInt(arr.length)];
 }
+
+interface MessageTemplate {
+  author: UserTemplate;
+  content: string;
+}
+
+const Message = ({ data: { author, content } }: { data: MessageTemplate }) => {
+  return (
+    <li className="message">
+      <Avatar user={author} />
+      <div className="message-container">
+        <div className="message-author">{author.name}</div>
+        <div className="message-content">{content}</div>
+      </div>
+    </li>
+  );
+};
+
+const MessageEntry = ({ onSubmit }) => {
+  const [content, setContent] = useState("");
+  const [lastMessageTime, setLastMessageTime] = useState(-99999);
+  const [error, setError] = useState<string>();
+
+  //Deprecated anti-amogus filter
+  const rejectionMessages = ["No.", "Stop.", "Nope!", "Nevermind"];
+  function onMessageChange(text) {
+    if (/*text.match(/amogus/i)*/ false) {
+      setContent(randomFromArray(rejectionMessages));
+      return;
+    }
+    setContent(text);
+  }
+
+  const onCooldown = () => {
+    const time = Date.now();
+
+    //Return true if it hasn't been 0.5s since last message
+    return lastMessageTime + 500 > time;
+  };
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    //If the message contains no content other than whitespace
+    if (!content.replace(/\s/g, "").length) return false;
+    if (onCooldown()) {
+      setError("You're sending messages too fast!");
+      return false;
+    }
+
+    setLastMessageTime(Date.now());
+    onSubmit(content);
+    setContent("");
+  }
+
+  return (
+    <form className="message-entry" onSubmit={handleSubmit}>
+      <input
+        value={content}
+        onChange={(e) => onMessageChange(e.target.value)}
+      />
+      <button />
+    </form>
+  );
+};
+
+const MessageList = ({
+  messages
+}: {
+  messages: { [key: string]: MessageTemplate };
+}) => {
+  const ref = useRef<HTMLDivElement>();
+
+  const msgAmt = Object.values(messages).length;
+  useEffect(() => {
+    const messageList = ref.current;
+    const { scrollTop, scrollHeight, offsetHeight } = messageList;
+
+    const isScrolledToBottom = scrollHeight - offsetHeight - scrollTop < 100;
+
+    if (isScrolledToBottom) {
+      messageList.scrollTop = scrollHeight;
+    }
+  }, [msgAmt]);
+
+  if (!messages) return <div className="message-list" />;
+
+  const messageComponents = Object.values(messages).map((m) => {
+    return <Message data={m} />;
+  });
+
+  return (
+    <div className="message-list" ref={ref}>
+      {messageComponents}
+    </div>
+  );
+};
 
 const Chat = () => {
   const code = useContext(RoomContext);
@@ -30,80 +125,6 @@ const Chat = () => {
     );
 
   return <div className="chat">Loading..</div>;
-};
-
-const MessageList = ({ messages = {} }) => {
-  const messageComponents = Object.values(messages).map((m) => {
-    return <Message data={m} />;
-  });
-  const ref = useRef<HTMLDivElement>();
-
-  useEffect(() => {
-    const messageList = ref.current;
-    const { scrollTop, scrollHeight, offsetHeight } = messageList;
-
-    const isScrolledToBottom = scrollHeight - offsetHeight - scrollTop < 100;
-
-    if (isScrolledToBottom) {
-      messageList.scrollTop = scrollHeight;
-    }
-  }, [Object.values(messages).length]);
-
-  return (
-    <div className="message-list" ref={ref}>
-      {messageComponents}
-      {debug}
-    </div>
-  );
-};
-
-const Message = ({ data: { author, content } }) => {
-  return (
-    <li className="message">
-      <Avatar user={author} />
-      <div className="message-container">
-        <div className="message-author">{author.name}</div>
-        <div className="message-content">{content}</div>
-      </div>
-    </li>
-  );
-};
-
-const MessageEntry = ({ onSubmit }) => {
-  const [content, setContent] = useState("");
-  const [lastMessageTime, setLastMessageTime] = useState();
-
-  const rejectionMessages = ["No.", "Stop.", "Nope!", "Nevermind"];
-  function onMessageChange(text) {
-    if (/*text.match(/amogus/i)*/ false) {
-      setContent(randomFromArray(rejectionMessages));
-      return;
-    }
-    setContent(text);
-  }
-
-  const onCooldown = () => {
-    const time = Date.now();
-  };
-  function handleSubmit(e) {
-    e.preventDefault();
-
-    //If the message contains no content other than whitespace
-    if (!content.replace(/\s/g, "").length) return false;
-
-    onSubmit(content);
-    setContent("");
-  }
-
-  return (
-    <form className="message-entry" onSubmit={handleSubmit}>
-      <input
-        value={content}
-        onChange={(e) => onMessageChange(e.target.value)}
-      />
-      <button />
-    </form>
-  );
 };
 
 export default Chat;

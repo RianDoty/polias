@@ -1,29 +1,24 @@
 import type { NextFunction, Request, Response } from "express";
-import type { Server as MyServer, Socket as MySocket } from "./socket-types";
 import type { RoomData, RoomParameters } from "./room";
 
 import { Server } from "socket.io";
 import RoomManager from "./room-manager";
 import { randomCode } from "./random-code";
+import debugNSP from "./nspdebug";
 const express = require("express");
 const path = require("path");
 const app = express();
 const http = require("http").Server(app);
 
 const io = new Server(http);
-const nsp: MyServer = io.of("/");
+const nsp = io.of("/");
 
 const MyRoomManager = new RoomManager(nsp);
 
+debugNSP(nsp);
+
 //Base server for creating rooms
-nsp.on("connection", (socket: MySocket) => {
-  //Debug
-  console.log("connection");
-
-  socket.onAny((name: string, ...args: any[]) => {
-    console.log(`[S] ${name}:`, args);
-  });
-
+nsp.on("connection", (socket) => {
   socket.on("room_create", function onCreateRoomRequest(
     roomParams: RoomParameters
   ) {
@@ -37,7 +32,6 @@ nsp.on("connection", (socket: MySocket) => {
       });
 
       const room = MyRoomManager.createRoom(roomData);
-      console.log(room);
       socket.emit("room_send", room.code);
     } catch (err) {
       console.error("error when creating room");

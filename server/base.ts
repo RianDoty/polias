@@ -1,10 +1,9 @@
-import type { RoomServer } from "./room-socket-types";
-import type { Server } from "./socket-types";
+import { Namespace } from "socket.io";
 
 export default class Base {
-  readonly io!: Server | RoomServer;
+  readonly io!: Namespace;
 
-  constructor(io: Server | RoomServer) {
+  constructor(io: Namespace) {
     Object.defineProperty(this, "io", { value: io });
   }
 }

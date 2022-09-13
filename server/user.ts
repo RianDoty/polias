@@ -7,34 +7,39 @@ const maxNicknameLength = 20;
 export interface UserTemplate {
   //{ name, userID, isHost, ready, role }
   name: string;
-  userID: string;
+  userId: string;
   isHost: boolean;
   ready: boolean;
   role: string;
+  cardId: number;
 }
 
 //Represents a Socket inside of a Room
 class User extends BaseRoomStructure {
-  name!: string;
-  userID!: string;
-  ready!: boolean;
-  inGame!: false;
+  name: string;
+  userId: string;
+  ready: boolean;
+  inGame: false;
   readonly room!: Room;
-  role!: string;
+  role: string;
 
   constructor(
     room: Room,
-    { userID = uuidv4(), name = "Unknown" }: { userID?: string; name: string }
+    {
+      userId = uuidv4(),
+      name = "Unknown"
+    }: {
+      userId?: string;
+      name: string;
+    }
   ) {
     super(room);
 
-    Object.assign(this, {
-      name,
-      userID,
-      ready: false,
-      inGame: false,
-      role: "Chillin'"
-    });
+    this.name = name;
+    this.userId = userId;
+    this.ready = false;
+    this.inGame = false;
+    this.role = "Chillin'";
   }
 
   getSockets() {
@@ -62,10 +67,11 @@ class User extends BaseRoomStructure {
   }
 
   template(): UserTemplate {
-    const { name, userID, ready, role } = this;
+    const { name, userId, ready, role } = this;
 
     const isHost = this.isHost();
-    return { name, userID, isHost, ready, role };
+    //TODO: fetch cardId properly
+    return { name, userId, isHost, ready, role, cardId: 1 };
   }
 
   hasAdmin() {

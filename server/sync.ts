@@ -113,7 +113,7 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
       if (!user)
         return next(Error("Provided session ID does not exist on server!"));
 
-      socket.data.userId = user.userID;
+      socket.data.userId = user.userId;
     });
 
     this.individualData = new Map();
@@ -130,11 +130,11 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
   }
 
   updateUser(user: User, diff: Diff<SyncKeywords[V]>) {
-    const data = this.individualData.get(user.userID) ?? {};
+    const data = this.individualData.get(user.userId) ?? {};
 
     try {
       patch(data, diff);
-      this.io.to(user.userID).emit("sync_diff", diff);
+      this.io.to(user.userId).emit("sync_diff", diff);
     } catch (err) {
       console.error("error in diff");
       console.error(err);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import useSync from "../hooks/sync";
@@ -174,6 +174,15 @@ export default function Home() {
   const [connected, setConnected] = useState(false);
   const [, setLocation] = useLocation();
 
+  useEffect(() => {
+    setUsername(localStorage.getItem("username"));
+  }, [setUsername]);
+
+  const onSetUsername = (name: string) => {
+    localStorage.setItem("username", name);
+    setUsername(name);
+  };
+
   useSocketCallbacks(socket, {
     connect: () => {
       setConnected(true);
@@ -209,7 +218,7 @@ export default function Home() {
       <Section>
         <h1>Welcome to Polias!</h1>
         <p>
-          Polias is a deception game (very early in development) where{" "}
+          Polias is a social game (very early in development) where{" "}
           <em>everyone</em> gets to have fun.
         </p>
         <p>
@@ -227,7 +236,7 @@ export default function Home() {
       <h2>Get Started</h2>
       <Section>
         <Cell wClass="w-1-2 center-float" header="Enter your Name">
-          <NameEntry setUsername={setUsername} />
+          <NameEntry setUsername={onSetUsername} />
         </Cell>
       </Section>
       {middleSection}

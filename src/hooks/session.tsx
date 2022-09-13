@@ -1,3 +1,2 @@
-import React from 'react';
-
-const { sessionStorage } = window;
+import { useContext } from "react";
+import RoomContext from "../contexts/room";

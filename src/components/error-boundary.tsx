@@ -1,7 +1,7 @@
 import React, { Component, FunctionComponent } from "react";
 
 class ErrorBoundary extends Component<
-  { fallbackComponent?: FunctionComponent; children: React.ReactNode },
+  { fallback?: FunctionComponent; children: React.ReactNode },
   { hasError: boolean }
 > {
   constructor(props) {
@@ -13,14 +13,14 @@ class ErrorBoundary extends Component<
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) {
-    console.log(error, errorInfo);
+  componentDidCatch(error) {
+    console.log(error);
   }
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallbackComponent ? (
-        <this.props.fallbackComponent />
+      return this.props.fallback ? (
+        <this.props.fallback />
       ) : (
         <h1>Something went wrong.</h1>
       );

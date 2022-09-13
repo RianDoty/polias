@@ -1,8 +1,12 @@
 import { useEffect, useMemo } from "react";
 import { Socket } from "socket.io-client";
 import io, { ManagerOptions, SocketOptions } from "socket.io-client";
+import { DefaultEventsMap } from "socket.io/dist/typed-events";
 
-export default function useSocket<ListenEvents = any, EmitEvents = any>(
+export default function useSocket<
+  ListenEvents = DefaultEventsMap,
+  EmitEvents = DefaultEventsMap
+>(
   namespace: string,
   options: Partial<ManagerOptions & SocketOptions> = {}
 ): Socket<ListenEvents, EmitEvents> {
@@ -15,14 +19,17 @@ export default function useSocket<ListenEvents = any, EmitEvents = any>(
 
   useEffect(() => {
     socket.on("connect", () => {
-      console.log(`socket ${namespace} connected`);
+      console.log(`[${namespace}] connected`);
     });
 
     socket.on("disconnect", () => {
-      console.log(`socket ${namespace} disconnected`);
+      console.log(`[${namespace}] disconnected`);
     });
 
-    return () => void socket.disconnect();
+    return () => {
+      console.log(`[${namespace}] unmounted`);
+      socket.disconnect();
+    };
   }, [namespace]);
 
   return socket;

@@ -17,4 +17,6 @@ export const UsernameProvider = ({ def = "", children }) => (
     {children}
   </UsernameContext.Provider>
 );
-export default () => useContext(UsernameContext);
+export default function useUsername() {
+  return useContext(UsernameContext);
+}
