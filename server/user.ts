@@ -12,6 +12,7 @@ export interface UserTemplate {
   ready: boolean;
   role: string;
   cardId: number;
+  present: boolean;
 }
 
 //Represents a Socket inside of a Room
@@ -21,7 +22,8 @@ class User extends BaseRoomStructure {
   ready: boolean;
   inGame: false;
   readonly room!: Room;
-  role: string;
+  role: string
+  present: boolean
 
   constructor(
     room: Room,
@@ -40,6 +42,7 @@ class User extends BaseRoomStructure {
     this.ready = false;
     this.inGame = false;
     this.role = "Chillin'";
+    this.present = true;
   }
 
   getSockets() {
@@ -67,11 +70,11 @@ class User extends BaseRoomStructure {
   }
 
   template(): UserTemplate {
-    const { name, userId, ready, role } = this;
+    const { name, userId, ready, role, present } = this;
 
     const isHost = this.isHost();
     //TODO: fetch cardId properly
-    return { name, userId, isHost, ready, role, cardId: 1 };
+    return { name, userId, isHost, ready, role, cardId: 1, present };
   }
 
   hasAdmin() {

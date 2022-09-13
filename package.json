@@ -31,7 +31,8 @@
     "developmentVSC": "concurrently --kill-others \"npm run server\" \"npm run client\"",
     "server": "npm run build && node dist/server.js",
     "build": "npx tsc",
-    "client": "vite"
+    "client": "vite",
+    "test": "jest"
   },
   "engines": {
     "node": "14.x"
@@ -53,6 +54,7 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^29.0.2",
     "@types/uuid": "^8.3.4"
   }
 }
