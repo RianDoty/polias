@@ -40,7 +40,7 @@ export default function RoomMain({
   useEffect(() => {
     socket.auth = { sessionId: localStorage.getItem("session") };
     socket.connect();
-  }, [socket]);
+  }, []);
 
   const OptionsContext = getSyncContext("room_options");
   const optionsSync = useSync(code, "room_options");

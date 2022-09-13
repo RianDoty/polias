@@ -48,14 +48,14 @@ export default class UserManager extends BaseManager {
     this.io.on("connection", (socket: Socket) => {
       try {
         //Socket should always have a registered User before being checked in
-        const { user } = socket.data;
+        const user: User = socket.data.user;
         if (!user)
           throw Error(
             "Socket should have a User before being registered by the UserManager!"
           );
         const { userId } = user;
 
-        const { sessionId } = socket.data;
+        const sessionId: string = socket.data.sessionId;
         if (!sessionId) throw Error("Socket expected to have a session ID!");
 
         socket.join(sessionId);
@@ -63,10 +63,9 @@ export default class UserManager extends BaseManager {
 
         socket.on("disconnect", async () => {
           if ((await this.io.in(sessionId).fetchSockets()).length === 0) {
-            //There are no more sockets controlling this user, so it has left.
-            this.users.delete(sessionId);
+            //There are no more sockets controlling this user, so it is not present.
             this.events.emit("user-leave");
-            this.room.syncManager.deleteUser(user);
+            //this.room.syncManager.usersSync.update({})
           }
         });
 

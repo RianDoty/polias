@@ -40,7 +40,8 @@ const UserList = () => {
             role: "...",
             ready: false,
             isHost: false,
-            userId: ""
+            userId: "",
+            cardId: -1
           }}
           me={true}
         />
@@ -48,7 +49,7 @@ const UserList = () => {
     );
 
   const entries = Object.values(users).map((u) => (
-    <UserEntry user={u} me={u.userId === myUserId} />
+    u.present? <UserEntry user={u} me={u.userId === myUserId} /> : null
   ));
 
   return <div className="user-list">{entries}</div>;
