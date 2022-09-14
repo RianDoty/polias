@@ -33,6 +33,7 @@ export default class UserManager extends BaseManager {
       }
 
       //Else, make a new user and session
+      console.log("Making a new user");
       try {
         const { username } = socket.handshake.auth;
         const newUser = new User(this.room, { name: username });
