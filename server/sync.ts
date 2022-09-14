@@ -38,25 +38,25 @@ function hasKey<K extends string>(
   return tbl.hasOwnProperty(key);
 }
 
-export type Diff<T> = { [K in keyof T]?: Diff<T[K]> };
-function patch<D extends object>(d: D, diff: Diff<D>) {
+export type Diff<T> = { [K in keyof T]?: Diff<T[K]> | unknown };
+function patch<D extends object>(data: D, diff: Diff<D>) {
   for (const [key, value] of Object.entries(diff)) {
-    if (!hasKey(d, key) || typeof value !== typeof d[key]) {
-      Object.assign(d, { key: value });
+    if (!hasKey(data, key) || typeof value !== typeof data[key]) {
+      Object.assign(data, { [key]: value });
       continue;
     }
 
     if (value && typeof value === "object") {
-      const dk = d[key];
-      if (dk && typeof dk === "object") {
-        patch(value, dk);
+      const dataEntry = data[key];
+      if (dataEntry && typeof dataEntry === "object") {
+        patch(dataEntry, value);
         continue;
       }
     }
 
-    if (value === undefined) delete d[key];
+    if (value === undefined) delete data[key];
 
-    Object.assign(d, { key: value });
+    Object.assign(data, { [key]: value });
   }
 }
 
@@ -94,6 +94,10 @@ class SyncHost<V extends keyof SyncKeywords> extends Base {
       console.error(`Error in diff`);
       console.error(err);
     }
+  }
+
+  close() {
+    this.nsp.removeAllListeners()
   }
 }
 

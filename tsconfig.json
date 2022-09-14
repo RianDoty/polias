@@ -4,13 +4,14 @@
     "outDir": "dist",
     "target": "ES6",
     "moduleResolution": "node",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "sourceMap": true
   },
   "include": [
     "server",
     "src/room-socket-types.d.ts",
     "src/socket-types.d.ts"
-  ],
+, "babel.config.js"  ],
   "exclude": [
     "node_modules",
     "src"

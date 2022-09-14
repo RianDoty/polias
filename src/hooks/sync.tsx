@@ -7,35 +7,35 @@ function JSONClone<O extends object>(obj: O): O {
   return JSON.parse(JSON.stringify(obj));
 }
 
-function patch<D extends object>(d: D, diff: Partial<D>) {
-  for (const [key, value] of Object.entries(diff)) {
-    function hasKey(tbl: {}): tbl is { [index: typeof key]: unknown } {
-      return tbl.hasOwnProperty(key);
-    }
+function hasKey<K extends string>(
+  tbl: {},
+  key: K
+): tbl is { [index in K]: unknown } {
+  return tbl.hasOwnProperty(key);
+}
 
-    //If key is new or the type has changed then assign directly
-    if (!hasKey(d) || typeof value !== typeof d[key]) {
-      Object.assign(d, { [key]: value });
+type Diff<T> = { [K in keyof T]?: Diff<T[K]> | unknown };
+function patch<D extends object>(data: D, diff: Diff<D>) {
+  for (const [key, value] of Object.entries(diff)) {
+    if (!hasKey(data, key) || typeof value !== typeof data[key]) {
+      Object.assign(data, { [key]: value });
       continue;
     }
 
-    //If the value is an object then recursively patch
     if (value && typeof value === "object") {
-      const dk = d[key];
-      if (dk && typeof dk === "object") {
-        patch(value, dk);
+      const dataEntry = data[key];
+      if (dataEntry && typeof dataEntry === "object") {
+        patch(dataEntry, value);
         continue;
       }
     }
 
-    //If the value is undefined [but the key is] then take that
-    //as a signal to delete the value
-    if (value === undefined) delete d[key];
+    if (value === undefined) delete data[key];
 
-    //If all else fails just assign value to key
-    Object.assign(d, { [key]: value });
+    Object.assign(data, { [key]: value });
   }
-  return d;
+
+  return data
 }
 
 export type SyncState<k extends keyof SyncKeywords> =
@@ -46,7 +46,7 @@ export default function useSync<k extends keyof SyncKeywords>(
   keyword: k
 ): SyncState<k> {
   const [loading, setLoading] = useState(true);
-  const [store, setStore] = useState<SyncKeywords[k]>();
+  const [store, setStore] = useState<SyncKeywords[k]>({} as SyncKeywords[k]);
   const socket = useSocket<SyncServerEvents<k>>(
     `${nsp === "/" ? "" : `/${nsp}`}/sync/${keyword}/`
   );
@@ -57,8 +57,8 @@ export default function useSync<k extends keyof SyncKeywords>(
   };
 
   //Stores are immutable!
-  const onDiff = (diff: Partial<SyncKeywords[k]>) =>
-    setStore((store: SyncKeywords[k]) => patch(JSONClone(store), diff));
+  const onDiff = (diff: Diff<SyncKeywords[k]>) =>
+    setStore((store) => patch(JSONClone(store) as SyncKeywords[k], diff));
 
   //Technically a race condition but it's like racing against the flash
   useSocketCallbacks(socket, {
