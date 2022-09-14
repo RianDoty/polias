@@ -6,6 +6,7 @@ import "./styles/App.css";
 import TopBar from "./components/top-bar";
 
 import { UsernameProvider } from "./contexts/username";
+import ErrorBoundary from "./components/error-boundary";
 
 function App() {
   return (
@@ -14,7 +15,9 @@ function App() {
         <TopBar />
         <Router>
           <main className="app-main">
-            <PageRouter />
+            <ErrorBoundary>
+              <PageRouter />
+            </ErrorBoundary>
           </main>
         </Router>
       </UsernameProvider>

@@ -1,15 +1,20 @@
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import useSync from "../hooks/sync";
+import { getSocketContext } from "../contexts/socket-context";
 
 import useUsername from "../contexts/username";
 
 import "../styles/home.css";
 
-import socket from "../socket";
 import useSocketCallbacks from "../hooks/socket-callbacks";
 import { RoomTemplate } from "../../server/room";
+import useSocket from "../hooks/socket";
+
+const SocketContext = getSocketContext("/");
+const SocketProvider = SocketContext.Provider;
+const useSocketContext = () => useContext(SocketContext);
 
 //Components
 const Section = ({ children }) => (
@@ -39,6 +44,7 @@ const ErrorComponent = ({ children }) => (
 const NameEntry = ({ setUsername }) => {
   const [inpVal, updateInpVal] = useState("");
   const [err, setErr] = useState("");
+  const socket = useSocketContext();
 
   function onSubmit(e) {
     e.preventDefault();
@@ -91,6 +97,7 @@ const RoomCreator = () => {
   const [err, setErr] = useState("");
   const [name, setName] = useState("");
   const [username] = useUsername();
+  const socket = useSocketContext();
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -173,6 +180,7 @@ export default function Home() {
   const [username, setUsername] = useUsername();
   const [connected, setConnected] = useState(false);
   const [, setLocation] = useLocation();
+  const socket = useSocket("/");
 
   useEffect(() => {
     setUsername(localStorage.getItem("username"));
@@ -196,7 +204,7 @@ export default function Home() {
     room_send: (code) => {
       setLocation(`/game/${code}`);
       socket.disconnect();
-    }
+    },
   });
 
   let middleSection;
@@ -214,35 +222,37 @@ export default function Home() {
   }
 
   return (
-    <div className="narrow">
-      <Section>
-        <h1>Welcome to Polias!</h1>
-        <p>
-          Polias is a social game (very early in development) where{" "}
-          <em>everyone</em> gets to have fun.
-        </p>
-        <p>
-          Scheme, steal, and work to make bank the fastest to buy the legendary
-          idol and ascend to greatness!
-        </p>
-        <p>
-          If you just want to use the chat and not the more experimental parts
-          of the site, visit{" "}
-          <a className="default" href="https://www.erhschat.glitch.me">
-            ERHSchat.
-          </a>
-        </p>
-      </Section>
-      <h2>Get Started</h2>
-      <Section>
-        <Cell wClass="w-1-2 center-float" header="Enter your Name">
-          <NameEntry setUsername={onSetUsername} />
-        </Cell>
-      </Section>
-      {middleSection}
-      <Section>
-        <BottomLogo />
-      </Section>
-    </div>
+    <SocketProvider value={socket}>
+      <div className="narrow">
+        <Section>
+          <h1>Welcome to Polias!</h1>
+          <p>
+            Polias is a social game (very early in development) where{" "}
+            <em>everyone</em> gets to have fun.
+          </p>
+          <p>
+            Scheme, steal, and work to make bank the fastest to buy the
+            legendary idol and ascend to greatness!
+          </p>
+          <p>
+            If you just want to use the chat and not the more experimental parts
+            of the site, visit{" "}
+            <a className="default" href="https://www.erhschat.glitch.me">
+              ERHSchat.
+            </a>
+          </p>
+        </Section>
+        <h2>Get Started</h2>
+        <Section>
+          <Cell wClass="w-1-2 center-float" header="Enter your Name">
+            <NameEntry setUsername={onSetUsername} />
+          </Cell>
+        </Section>
+        {middleSection}
+        <Section>
+          <BottomLogo />
+        </Section>
+      </div>
+    </SocketProvider>
   );
 }

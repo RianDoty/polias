@@ -23,6 +23,7 @@ export default class UserManager extends BaseManager {
 
       //If the socket has a session
       if (sessionId) {
+        console.log("Session Provided");
         //Look up an existing user, if it doesn't exist, throw an error
         const existingUser = this.users.get(sessionId);
         if (!existingUser) return next(new Error("Invalid SessionID"));
@@ -33,7 +34,6 @@ export default class UserManager extends BaseManager {
       }
 
       //Else, make a new user and session
-      console.log("Making a new user");
       try {
         const { username } = socket.handshake.auth;
         const newUser = new User(this.room, { name: username });
