@@ -5,13 +5,15 @@
     "target": "ES6",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "server",
     "src/room-socket-types.d.ts",
-    "src/socket-types.d.ts"
-, "babel.config.js"  ],
+    "src/socket-types.d.ts",
+    "babel.config.js"
+  ],
   "exclude": [
     "node_modules",
     "src"

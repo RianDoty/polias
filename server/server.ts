@@ -1,11 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import type { RoomData, RoomParameters } from "./room";
-
 import { Server } from "socket.io";
 import RoomManager from "./room-manager";
 import { randomCode } from "./random-code";
 import debugNSP from "./nspdebug";
-const express = require("express");
+import express from "express";
 const path = require("path");
 const app = express();
 const http = require("http").Server(app);
@@ -38,6 +37,11 @@ nsp.on("connection", (socket) => {
       console.error(err);
     }
   });
+});
+
+app.get("/api", (req, res) => {
+  console.log("Request recieved!");
+  res.send(true);
 });
 
 //  Boring server stuff

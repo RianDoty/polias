@@ -12,10 +12,6 @@ code {
     monospace;
 }
 
-* {
-  outline: auto;
-}
-
 /*root vars*/
 :root {
   --header-height: 57px;

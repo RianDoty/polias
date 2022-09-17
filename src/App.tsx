@@ -11,7 +11,7 @@ import ErrorBoundary from "./components/error-boundary";
 function App() {
   return (
     <div className="App">
-      <UsernameProvider>
+      <UsernameProvider def={localStorage.getItem("username")}>
         <TopBar />
         <Router>
           <main className="app-main">

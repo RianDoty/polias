@@ -5,7 +5,7 @@ import reactRefresh from "@vitejs/plugin-react-refresh";
 export default defineConfig({
   plugins: [reactRefresh()],
   build: {
-    outDir: "build",
+    outDir: "build"
   },
   server: {
     //strictPort: true,
@@ -13,11 +13,15 @@ export default defineConfig({
     //  port: 443, // Run the websocket server on the SSL port
     //},
     proxy: {
+      "/api": {
+        target: "http://localhost:3001"
+      },
+
       "/socket.io": {
         //Express/socket.io server runs at 3001
         target: "ws://localhost:3001",
-        ws: true,
+        ws: true
       }
-    },
-  },
+    }
+  }
 });

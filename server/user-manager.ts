@@ -23,10 +23,14 @@ export default class UserManager extends BaseManager {
 
       //If the socket has a session
       if (sessionId) {
-        console.log("Session Provided");
+        console.log("Session provided");
         //Look up an existing user, if it doesn't exist, throw an error
         const existingUser = this.users.get(sessionId);
-        if (!existingUser) return next(new Error("Invalid SessionID"));
+        if (!existingUser) {
+          console.error("Provided session does not exist!");
+          return next(new Error("Invalid SessionId"));
+        }
+        console.log("Provided session exists");
 
         socket.data.user = existingUser;
         socket.data.sessionId = sessionId;
@@ -36,6 +40,11 @@ export default class UserManager extends BaseManager {
       //Else, make a new user and session
       try {
         const { username } = socket.handshake.auth;
+        if (
+          typeof username !== "string" ||
+          username.replace(/\s/g, "").length === 0
+        )
+          return next(Error("Invalid Username"));
         const newUser = new User(this.room, { name: username });
 
         socket.data.user = newUser;
@@ -66,7 +75,7 @@ export default class UserManager extends BaseManager {
           if ((await this.io.in(sessionId).fetchSockets()).length === 0) {
             //There are no more sockets controlling this user, so it is not present.
             this.events.emit("user-leave");
-            //this.room.syncManager.usersSync.update({})
+            this.room.syncManager.updateUser(user, { present: false });
           }
         });
 

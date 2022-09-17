@@ -20,7 +20,6 @@ const UserEntry = ({ user, me }: { user: UserTemplate; me: boolean }) => {
     <div className={`user-entry${me ? " this-user" : ""}`} key={user.userId}>
       <Avatar user={user} />
       <UserInfo user={user} />
-      <div>user id: {user.userId}</div>
     </div>
   );
 };
@@ -33,7 +32,7 @@ const UserList = () => {
 
   if (loading)
     return (
-      <div className="user-list">
+      <div className="user-list" key={""}>
         <UserEntry
           user={{
             name: username,
@@ -41,7 +40,8 @@ const UserList = () => {
             ready: false,
             isHost: false,
             userId: "",
-            cardId: -1
+            cardId: -1,
+            present: true
           }}
           me={true}
         />
@@ -49,7 +49,7 @@ const UserList = () => {
     );
 
   const entries = Object.values(users).map((u) => (
-    u.present? <UserEntry user={u} me={u.userId === myUserId} /> : null
+    <UserEntry user={u} me={u.userId === myUserId} />
   ));
 
   return <div className="user-list">{entries}</div>;

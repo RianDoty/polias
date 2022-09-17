@@ -1,6 +1,8 @@
 import { Namespace } from "socket.io";
 
+const off = true;
 export default function debugNSP(nsp: Namespace) {
+  if (off) return;
   console.log(`NSP ${nsp.name} created`);
   nsp.on("connection", (socket) => {
     console.log(`[${nsp.name}] connection`);

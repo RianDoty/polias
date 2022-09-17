@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from "react";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import useSync from "../hooks/sync";
-import { getSocketContext } from "../contexts/socket-context";
+import useSocketContext, { SocketProvider } from "../contexts/socket-context";
 
 import useUsername from "../contexts/username";
 
@@ -11,10 +11,6 @@ import "../styles/home.css";
 import useSocketCallbacks from "../hooks/socket-callbacks";
 import { RoomTemplate } from "../../server/room";
 import useSocket from "../hooks/socket";
-
-const SocketContext = getSocketContext("/");
-const SocketProvider = SocketContext.Provider;
-const useSocketContext = () => useContext(SocketContext);
 
 //Components
 const Section = ({ children }) => (
@@ -44,7 +40,7 @@ const ErrorComponent = ({ children }) => (
 const NameEntry = ({ setUsername }) => {
   const [inpVal, updateInpVal] = useState("");
   const [err, setErr] = useState("");
-  const socket = useSocketContext();
+  const socket = useSocketContext("/");
 
   function onSubmit(e) {
     e.preventDefault();
@@ -97,7 +93,7 @@ const RoomCreator = () => {
   const [err, setErr] = useState("");
   const [name, setName] = useState("");
   const [username] = useUsername();
-  const socket = useSocketContext();
+  const socket = useSocketContext("/");
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -182,10 +178,6 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const socket = useSocket("/");
 
-  useEffect(() => {
-    setUsername(localStorage.getItem("username"));
-  }, [setUsername]);
-
   const onSetUsername = (name: string) => {
     localStorage.setItem("username", name);
     setUsername(name);
@@ -204,7 +196,7 @@ export default function Home() {
     room_send: (code) => {
       setLocation(`/game/${code}`);
       socket.disconnect();
-    },
+    }
   });
 
   let middleSection;
@@ -222,7 +214,7 @@ export default function Home() {
   }
 
   return (
-    <SocketProvider value={socket}>
+    <SocketProvider nsp="/" socket={socket}>
       <div className="narrow">
         <Section>
           <h1>Welcome to Polias!</h1>
