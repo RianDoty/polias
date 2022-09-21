@@ -39,9 +39,9 @@ nsp.on("connection", (socket) => {
   });
 });
 
-app.get("/api", (req, res) => {
+app.get("/api/:roomId", (req, res) => {
   console.log("Request recieved!");
-  res.send(true);
+  res.send({ exists: MyRoomManager.roomExists(req.params.roomId) });
 });
 
 //  Boring server stuff

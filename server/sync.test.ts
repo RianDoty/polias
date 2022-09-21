@@ -3,7 +3,9 @@ import { Socket as ClientSocket } from "socket.io-client";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import Client from "socket.io-client";
-import { Diff, SyncHost } from "./sync";
+import { Diff, PersonalSyncHost, SyncHost } from "./sync";
+import Room from "./room";
+import RoomManager from "./room-manager";
 
 let io: Server, serverSocket: ServerSocket, clientSocket: ClientSocket;
 let port: number;
@@ -100,25 +102,14 @@ describe("Server-Only SyncHost Tests", () => {
 
 describe("Server-Client SyncHost Tests", () => {
   let host: SyncHost<any>;
-  let syncServerSocket: ServerSocket;
   let syncClientSocket: ClientSocket;
-  let data: jest.Mock;
-  let diff: jest.Mock;
 
   beforeEach((done) => {
     host = new SyncHost(io.of("/"), "foobar" as any, {});
-    data = jest.fn();
-    diff = jest.fn();
-
-    host.nsp.on("connect", (socket) => {
-      serverSocket = socket;
-      done();
-    });
 
     syncClientSocket = Client(`http://localhost:${port}${host.nsp.name}`);
 
-    syncClientSocket.on("sync_diff", diff);
-    syncClientSocket.on("sync_data", data);
+    host.nsp.on("connection", () => done);
   });
 
   afterEach(() => {
@@ -129,7 +120,7 @@ describe("Server-Client SyncHost Tests", () => {
   test("Should pass base data to client", (done) => {
     syncClientSocket.once("sync_data", (recievedData) => {
       expect(recievedData).toEqual({});
-      done()
+      done();
     });
   });
 
@@ -141,5 +132,33 @@ describe("Server-Client SyncHost Tests", () => {
       expect(recievedDiff).toEqual({ foo: "bar" });
       done();
     });
+  });
+});
+
+describe("Server-Client PersonalSyncHost tests", () => {
+  let roomManager: RoomManager;
+  let room: Room;
+  let host: PersonalSyncHost<any>;
+  let syncClientSocket1: ClientSocket;
+  let syncClientSocket2: ClientSocket;
+
+  beforeEach(async () => {
+    roomManager = new RoomManager(io.of("/"));
+    room = new Room(roomManager, { code: "AAAA" });
+    host = new PersonalSyncHost(room, "foobar" as any, { foo: "bar" });
+
+    const address = `http://localhost:${port}${host.nsp.name}`;
+    syncClientSocket1 = Client(address);
+    syncClientSocket2 = Client(address);
+
+    await new Promise((r) => host.nsp.once("connection", r));
+    await new Promise((r) => host.nsp.once("connection", r));
+  });
+
+  it("Should provide both sockets with default data", async () => {
+    const nextData = (socket: ClientSocket) =>
+      new Promise((r) => socket.on("sync_data", r));
+    expect(await nextData(syncClientSocket1)).toEqual({ foo: "bar" });
+    expect(await nextData(syncClientSocket2)).toEqual({ foo: "bar" });
   });
 });

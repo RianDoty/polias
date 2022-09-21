@@ -37,15 +37,13 @@ export default function RoomMain({
   //Request the server to see if the game exists or not
   useEffect(() => {
     (async () => {
-      console.log("Beginning request to", `${window.location.href}/exists`);
-      const data = await fetch(`${window.location.origin}/api`).then((res) =>
-        res.json()
-      );
-
-      console.log(data);
-      setExists(data);
+      const location = window.location.origin;
+      const data: { exists: boolean } = await fetch(
+        `${location}/api/${code}`
+      ).then((res) => res.json());
+      setExists(data.exists);
     })();
-  }, [window.location.href]);
+  }, []);
 
   //The base socket being connected says to the server that the
   //user as a whole is connected to the game.

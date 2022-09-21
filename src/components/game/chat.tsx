@@ -4,6 +4,7 @@ import Avatar from "./avatar";
 import RoomContext from "../../contexts/room";
 import useSocket from "../../hooks/socket";
 import type { UserTemplate } from "../../../server/user";
+import { MessageTemplate } from "../../../server/sync";
 
 function randomInt(max = 0, min = 0) {
   return min + Math.floor(Math.random() * max);
@@ -11,11 +12,6 @@ function randomInt(max = 0, min = 0) {
 
 function randomFromArray(arr) {
   return arr[randomInt(arr.length)];
-}
-
-interface MessageTemplate {
-  author: UserTemplate;
-  content: string;
 }
 
 const Message = ({ data: { author, content } }: { data: MessageTemplate }) => {
@@ -49,7 +45,8 @@ const MessageEntry = ({ onSubmit }) => {
     const time = Date.now();
 
     //Return true if it hasn't been 0.5s since last message
-    return lastMessageTime + 500 > time;
+    const delay = 0.5;
+    return lastMessageTime + delay * 1000 > time;
   };
   function handleSubmit(e) {
     e.preventDefault();
@@ -111,20 +108,19 @@ const MessageList = ({
 
 const Chat = () => {
   const code = useContext(RoomContext);
-  const [loaded, messages] = useSync(code, "chat_log");
+  const [loading, messages] = useSync(code, "chat_log");
   const socket = useSocket(`${code}/chat`);
 
   const submitMessage = (content) => socket.emit("message-send", content);
 
-  if (loaded)
-    return (
-      <div className="chat">
-        <MessageList messages={messages} />
-        <MessageEntry onSubmit={submitMessage} />
-      </div>
-    );
+  if (loading) return <div className="chat">Loading..</div>;
 
-  return <div className="chat">Loading..</div>;
+  return (
+    <div className="chat">
+      <MessageList messages={messages} />
+      <MessageEntry onSubmit={submitMessage} />
+    </div>
+  );
 };
 
 export default Chat;

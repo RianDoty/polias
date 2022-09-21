@@ -14,7 +14,10 @@ export interface SyncServerEvents<k extends keyof SyncKeywords> {
 }
 
 //TODO: Fix this, this is not what it should be
-type MessageTemplate = {};
+export interface MessageTemplate {
+  author: UserTemplate;
+  content: string;
+}
 
 type ListOf<T> = { [key: string]: T };
 export interface SyncKeywords {

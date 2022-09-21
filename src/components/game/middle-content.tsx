@@ -7,7 +7,7 @@ const MiddleContent = () => {
   return (
     <div className="middle-content">
       <ErrorBoundary>
-        <Chat chatRoomName="lobby" />
+        <Chat />
       </ErrorBoundary>
     </div>
   );

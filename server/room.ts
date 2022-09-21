@@ -10,7 +10,7 @@ import { EventEmitter } from "events";
 
 export interface RoomData {
   code: string;
-  name: string;
+  name?: string;
   host?: Socket;
   password?: string;
 }
@@ -51,7 +51,10 @@ class Room extends Base {
   syncManager: RoomSyncManager;
   events: EventEmitter;
 
-  constructor(manager: RoomManager, { code, name, password }: RoomData) {
+  constructor(
+    manager: RoomManager,
+    { code, name = "Unnamed", password }: RoomData
+  ) {
     super(manager.io);
 
     this.code = code;
