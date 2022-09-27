@@ -13,7 +13,7 @@
     "src/room-socket-types.d.ts",
     "src/socket-types.d.ts",
     "babel.config.js"
-  ],
+, "src/jest.config.js"  ],
   "exclude": [
     "node_modules",
     "src"

@@ -32,7 +32,7 @@
     "server": "npm run build && node dist/server.js",
     "build": "npx tsc",
     "client": "vite",
-    "test": "jest --silent"
+    "test": "jest"
   },
   "engines": {
     "node": "14.x"
@@ -60,6 +60,7 @@
     "@types/jest": "^29.0.2",
     "@types/uuid": "^8.3.4",
     "babel-jest": "^29.0.3",
-    "jest": "^29.0.3"
+    "jest": "^29.0.3",
+    "ts-node": "^10.9.1"
   }
 }

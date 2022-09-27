@@ -16,7 +16,10 @@ export default class UserManager extends BaseManager {
 
     this.users = new Map();
     this.events = new EventEmitter();
+  }
 
+  /** Enables the UserManager, and adds middleware and listeners to its room's Namespace. */
+  listen() {
     // Gives the socket a user
     this.io.use((socket, next) => {
       const { sessionId } = socket.handshake.auth;

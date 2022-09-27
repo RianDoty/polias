@@ -57,9 +57,8 @@ function patch<D extends object>(data: D, diff: Diff<D>) {
       }
     }
 
-    if (value === undefined) delete data[key];
-
-    Object.assign(data, { [key]: value });
+    if (value !== undefined) Object.assign(data, { [key]: value });
+    else delete data[key];
   }
 }
 

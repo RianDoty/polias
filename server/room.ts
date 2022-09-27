@@ -68,6 +68,10 @@ class Room extends Base {
     this.ioNamespace = ioNamespace;
 
     this.users = new UserManager(this);
+    
+    this.gameConfig = new Config(baseConfigData);
+
+    this.syncManager = new RoomSyncManager(this);
 
     //Password Authentication
     ioNamespace.use((socket: Socket, next: (err?: Error) => void) => {
@@ -82,9 +86,7 @@ class Room extends Base {
       next();
     });
 
-    this.gameConfig = new Config(baseConfigData);
-
-    this.syncManager = new RoomSyncManager(this);
+    this.users.listen()
   }
 
   template(): RoomTemplate {

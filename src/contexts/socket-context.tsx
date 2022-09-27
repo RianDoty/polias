@@ -1,7 +1,7 @@
 import React, { Context, createContext, ReactNode, useContext } from "react";
 import { Socket } from "socket.io-client";
 
-const CONTEXTSTORE = new Map<string, Context<Socket>>();
+const CONTEXTSTORE = new Map<string, Context<Socket|undefined>>();
 
 //Has collisions, shouldn't matter
 //because they only really do when you're
@@ -25,9 +25,11 @@ export function SocketProvider({
   socket: Socket;
   children: ReactNode;
 }) {
-  if (!CONTEXTSTORE.has(nsp))
-    CONTEXTSTORE.set(nsp, createContext<Socket | undefined>(undefined));
-  const SyncContext = CONTEXTSTORE.get(nsp);
+  let SyncContext = CONTEXTSTORE.get(nsp)
+  if (!SyncContext) {
+    SyncContext = createContext<Socket | undefined>(undefined)
+    CONTEXTSTORE.set(nsp, SyncContext);
+  }
 
   SyncContext.displayName = `${nsp} SocketContext`;
   return <SyncContext.Provider value={socket}>{children}</SyncContext.Provider>;

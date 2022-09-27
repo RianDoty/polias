@@ -6,16 +6,30 @@ import Client from "socket.io-client";
 import { Diff, PersonalSyncHost, SyncHost } from "./sync";
 import Room from "./room";
 import RoomManager from "./room-manager";
+import { AddressInfo } from "net";
 
 let io: Server, serverSocket: ServerSocket, clientSocket: ClientSocket;
 let port: number;
 
+type ObjectWithOnceEvent = { once: (name: string, cb: (...args: any[]) => void) => void }
+/** Returns a Promise that resolves once the socket emits the given event */
+const socketEvent = (socket: ObjectWithOnceEvent, event: string) => new Promise(r => socket.once(event, r))
+/** Returns a promise that resolves once the socket connects and rejects if it emits a connect error */
+const socketConnect = (socket: ClientSocket | ServerSocket) => Promise.race([socketEvent(socket, 'connect'), rj(socketEvent(socket, 'connect_error'))])
+
+/** Returns a Promise that rejects then the other resolves or rejects */
+const rj = (p: Promise<unknown>) => new Promise((_,rj) => p.then(rj).catch(rj))
+
+/** Returns the network address for sockets on the client given a path */
+let Address: (path?: string) => string
+
 beforeAll((done) => {
-  const httpServer = createServer() as any;
+  const httpServer = createServer();
   io = new Server(httpServer);
   httpServer.listen(() => {
-    port = httpServer.address().port;
-    clientSocket = Client(`http://localhost:${port}`);
+    port = (httpServer.address() as AddressInfo).port;
+    Address = (path) => `http://localhost:${port}${path}`
+    clientSocket = Client(Address());
     io.on("connection", (socket) => {
       serverSocket = socket;
     });
@@ -29,7 +43,7 @@ afterAll(() => {
 });
 
 describe("Basic Socket Tests", () => {
-  test("should work", (done) => {
+  it("should work", (done) => {
     clientSocket.on("hello", (arg) => {
       expect(arg).toBe("world");
       done();
@@ -37,7 +51,7 @@ describe("Basic Socket Tests", () => {
     serverSocket.emit("hello", "world");
   });
 
-  test("should work (with ack)", (done) => {
+  it("should work (with ack)", (done) => {
     serverSocket.on("hi", (cb) => {
       cb("hola");
     });
@@ -52,24 +66,24 @@ describe("Server-Only SyncHost Tests", () => {
   let host: SyncHost<any>;
 
   beforeEach(() => {
-    host = new SyncHost(io.of("/"), "" as any, {});
+    host = new SyncHost(io.of("/"), "foobar" as any, {});
   });
 
   afterEach(() => {
     host.close();
   });
 
-  test("Basic initialization", () => {
+  it("Initializes correctly", () => {
     expect(host.data).toEqual({});
-    expect(host.keyword).toBe("");
+    expect(host.keyword).toBe("foobar");
   });
 
-  test("Should add data when requested", () => {
+  it("Adds data when requested", () => {
     host.update({ hello: "world" });
     expect(host.data).toEqual({ hello: "world" });
   });
 
-  test("Should add and remove data when requested", () => {
+  it("Adds and removes data when requested", () => {
     //Add data
     host.update({ hello: "world" });
     expect(host.data).toEqual({ hello: "world" });
@@ -79,13 +93,18 @@ describe("Server-Only SyncHost Tests", () => {
     expect(host.data).toEqual({});
   });
 
-  test("Should add individual data while keeping unmentioned data", () => {
+  it("Adds new data while keeping unmentioned data", () => {
+    //Add a value
     host.update({ hello: "world" });
+
+    //Add a seperate value
     host.update({ foo: "bar" });
+
+    //Both should be present in the data
     expect(host.data).toEqual({ hello: "world", foo: "bar" });
   });
 
-  test("Should add and remove nested data", () => {
+  it("Adds and removes nested data", () => {
     //Add a table
     host.update({ tbl: {} });
     expect(host.data).toEqual({ tbl: {} });
@@ -98,18 +117,29 @@ describe("Server-Only SyncHost Tests", () => {
     host.update({ tbl: { two: 2 } });
     expect(host.data).toEqual({ tbl: { one: 1, two: 2 } });
   });
+
+  it('Closes cleanly', () => {
+    const connectionListenerCount = () => host.nsp.listenerCount('connect') + host.nsp.listenerCount('connection')
+
+    expect(connectionListenerCount()).toBeGreaterThan(0)
+    host.close()
+    expect(connectionListenerCount()).toBe(0)
+  })
 });
 
 describe("Server-Client SyncHost Tests", () => {
   let host: SyncHost<any>;
   let syncClientSocket: ClientSocket;
+  let firstData: Promise<unknown>
 
   beforeEach((done) => {
-    host = new SyncHost(io.of("/"), "foobar" as any, {});
+    host = new SyncHost(io.of("/"), "foobar" as any, { foo: 'bar' });
 
     syncClientSocket = Client(`http://localhost:${port}${host.nsp.name}`);
 
-    host.nsp.on("connection", () => done);
+    syncClientSocket.on('connect', done)
+
+    firstData = socketEvent(syncClientSocket, 'sync_data')
   });
 
   afterEach(() => {
@@ -117,21 +147,17 @@ describe("Server-Client SyncHost Tests", () => {
     syncClientSocket.close();
   });
 
-  test("Should pass base data to client", (done) => {
-    syncClientSocket.once("sync_data", (recievedData) => {
-      expect(recievedData).toEqual({});
-      done();
-    });
+  it("Passes base data to client", async () => {
+    //Data is passed before test starts
+    expect(await firstData).toEqual({ foo: 'bar' })
   });
 
-  test("Should pass diffs to client", (done) => {
-    const thisDiff = { foo: "bar" };
+  it("Passes diffs to client", async () => {
+    const thisDiff = { fizz: "buzz" };
 
+    const nextRecievedDiff = socketEvent(syncClientSocket, 'sync_diff')
     host.update(thisDiff);
-    syncClientSocket.once("sync_diff", (recievedDiff) => {
-      expect(recievedDiff).toEqual({ foo: "bar" });
-      done();
-    });
+    expect(await nextRecievedDiff).toEqual({ fizz: 'buzz' })
   });
 });
 
@@ -141,24 +167,47 @@ describe("Server-Client PersonalSyncHost tests", () => {
   let host: PersonalSyncHost<any>;
   let syncClientSocket1: ClientSocket;
   let syncClientSocket2: ClientSocket;
+  let firstData1: Promise<unknown>
+  let firstData2: Promise<unknown>
 
   beforeEach(async () => {
     roomManager = new RoomManager(io.of("/"));
     room = new Room(roomManager, { code: "AAAA" });
     host = new PersonalSyncHost(room, "foobar" as any, { foo: "bar" });
 
-    const address = `http://localhost:${port}${host.nsp.name}`;
-    syncClientSocket1 = Client(address);
-    syncClientSocket2 = Client(address);
+    async function initSocket() {
+      const roomSocket = Client(Address(room.ioNamespace.name))
+      const sessionEvent = socketEvent(roomSocket, 'session')
+      await socketConnect(roomSocket)
+      const session = (await sessionEvent) as {userId: string, sessionId: string}
 
-    await new Promise((r) => host.nsp.once("connection", r));
-    await new Promise((r) => host.nsp.once("connection", r));
+      const syncSocket = Client(Address(host.nsp.name), {auth: {sessionId: session.sessionId}})
+
+      const firstData = socketEvent(syncSocket, 'sync_data')
+
+      await socketConnect(syncSocket)
+
+      return {socket: syncSocket, firstData}
+    }
+    const socketData = await Promise.all([initSocket(), initSocket()])
+
+    syncClientSocket1 = socketData[0].socket
+    firstData1 = socketData[0].firstData
+    syncClientSocket2 = socketData[1].socket
+    firstData2 = socketData[1].firstData
   });
 
-  it("Should provide both sockets with default data", async () => {
-    const nextData = (socket: ClientSocket) =>
-      new Promise((r) => socket.on("sync_data", r));
-    expect(await nextData(syncClientSocket1)).toEqual({ foo: "bar" });
-    expect(await nextData(syncClientSocket2)).toEqual({ foo: "bar" });
+  afterEach(() => {
+    host.close()
+    syncClientSocket1.close()
+    syncClientSocket2.close()
+  })
+
+  it("Provides both sockets with default data", async () => {
+    expect(await firstData1).toEqual({ foo: "bar" });
+    expect(await firstData2).toEqual({ foo: "bar" });
   });
+
+  // it('Provides each socket with unique diffs', () => {
+  // })
 });
