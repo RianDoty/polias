@@ -7,6 +7,8 @@ import { Diff, PersonalSyncHost, SyncHost } from "./sync";
 import Room from "./room";
 import RoomManager from "./room-manager";
 import { AddressInfo } from "net";
+import User from "./user";
+import { defineConfig } from "vite";
 
 let io: Server, serverSocket: ServerSocket, clientSocket: ClientSocket;
 let port: number;
@@ -20,6 +22,8 @@ const socketConnect = (socket: ClientSocket | ServerSocket) => Promise.race([soc
 /** Returns a Promise that rejects then the other resolves or rejects */
 const rj = (p: Promise<unknown>) => new Promise((_,rj) => p.then(rj).catch(rj))
 
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+
 /** Returns the network address for sockets on the client given a path */
 let Address: (path?: string) => string
 
@@ -27,8 +31,9 @@ beforeAll((done) => {
   const httpServer = createServer();
   io = new Server(httpServer);
   httpServer.listen(() => {
-    port = (httpServer.address() as AddressInfo).port;
-    Address = (path) => `http://localhost:${port}${path}`
+    const address = httpServer.address() as AddressInfo
+    port = address.port
+    Address = (path) => `http://localhost:${port}${path ?? ''}`
     clientSocket = Client(Address());
     io.on("connection", (socket) => {
       serverSocket = socket;
@@ -161,6 +166,46 @@ describe("Server-Client SyncHost Tests", () => {
   });
 });
 
+describe('Server-Only PersonalSyncHost tests', () => {
+  let roomManager: RoomManager
+  let room: Room
+  let host: PersonalSyncHost<any>
+  let user1: User
+  let user2: User
+
+  beforeEach(() => {
+    roomManager = new RoomManager(io.of('/'))
+    room = roomManager.createRoom({code: 'AAAA'})
+    host = new PersonalSyncHost(room, 'foobar' as any, {foo: 'bar'})
+
+    user1 = new User(room, {name: 'fizzbuzz'})
+    host.addUserById(user1.userId)
+
+    user2 = new User(room, {name: 'pingpong'})
+    host.addUserById(user2.userId)
+  })
+
+  describe('Single-User', () => {
+    it('Begins with initial data', () => {
+      const data = host.getDataById(user1.userId)
+  
+      expect(data).toBeDefined()
+      expect(data).toEqual({foo: 'bar'})
+    })  
+    
+    it('Edits data', () => {
+      const liveData = host.getDataById(user1.userId)
+      
+      host.updateUser(user1, { hello: "world" });
+      expect(liveData).toEqual({ foo: 'bar', hello: "world" });
+    })
+  })
+
+  describe('Multi-User', () => {
+    
+  })
+})
+
 describe("Server-Client PersonalSyncHost tests", () => {
   let roomManager: RoomManager;
   let room: Room;
@@ -169,14 +214,18 @@ describe("Server-Client PersonalSyncHost tests", () => {
   let syncClientSocket2: ClientSocket;
   let firstData1: Promise<unknown>
   let firstData2: Promise<unknown>
+  let user1: User
+  let user2: User
+
+  jest.setTimeout(250)
 
   beforeEach(async () => {
     roomManager = new RoomManager(io.of("/"));
-    room = new Room(roomManager, { code: "AAAA" });
+    room = roomManager.createRoom({code: 'AAAA'})
     host = new PersonalSyncHost(room, "foobar" as any, { foo: "bar" });
 
     async function initSocket() {
-      const roomSocket = Client(Address(room.ioNamespace.name))
+      const roomSocket = Client(Address(room.ioNamespace.name), {auth: {username: 'foo'}})
       const sessionEvent = socketEvent(roomSocket, 'session')
       await socketConnect(roomSocket)
       const session = (await sessionEvent) as {userId: string, sessionId: string}
@@ -187,14 +236,20 @@ describe("Server-Client PersonalSyncHost tests", () => {
 
       await socketConnect(syncSocket)
 
-      return {socket: syncSocket, firstData}
+      const user = room.users.findUser(session.sessionId)
+      if (!user) throw Error('No user found!')
+
+      return {socket: syncSocket, firstData, user}
     }
     const socketData = await Promise.all([initSocket(), initSocket()])
 
     syncClientSocket1 = socketData[0].socket
     firstData1 = socketData[0].firstData
+    user1 = socketData[0].user
+
     syncClientSocket2 = socketData[1].socket
     firstData2 = socketData[1].firstData
+    user2 = socketData[1].user
   });
 
   afterEach(() => {
@@ -208,6 +263,20 @@ describe("Server-Client PersonalSyncHost tests", () => {
     expect(await firstData2).toEqual({ foo: "bar" });
   });
 
-  // it('Provides each socket with unique diffs', () => {
-  // })
+  it('Emits diffs', async () => {
+    const diff = socketEvent(syncClientSocket1, 'sync_diff')
+    host.updateUser(user1, {bar: 'baz'})
+    expect(await diff).toEqual({bar: 'baz'})
+  })
+
+  it('Provides each socket with unique diffs', async () => {
+    const diff1 = socketEvent(syncClientSocket1, 'sync_diff')
+    const diff2 = socketEvent(syncClientSocket2, 'sync_diff')
+
+    host.updateUser(user1, {bar: 'baz'})
+    expect(await diff1).toEqual({bar: 'baz'})
+
+    host.updateUser(user2, {fizz: 'buzz'})
+    expect(await diff2).toEqual({fizz: 'buzz'})
+  })
 });

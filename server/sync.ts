@@ -125,13 +125,21 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
     this.individualData = new Map();
   }
 
+  addUserById(userId: string) {
+    this.individualData.set(userId, JSONClone(this.data));
+  }
+
+  getDataById(userId: string) {
+    return this.individualData.get(userId)
+  }
+
   sendData(socket: Socket, data?: SyncKeywords[V]) {
     if (data) return super.sendData(socket, data);
 
     const userId = socket.data.userId;
 
-    if (!this.individualData.has(userId))
-      this.individualData.set(userId, JSONClone(this.data));
+    if (!this.individualData.has(userId)) this.addUserById(userId)
+      
     super.sendData(socket, this.individualData.get(userId));
   }
 
