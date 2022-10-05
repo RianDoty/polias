@@ -107,10 +107,14 @@ class SyncHost<V extends keyof SyncKeywords> extends Base {
 // Use update() if you dare
 class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
   readonly individualData: Map<string, SyncKeywords[V]>;
+  permitUpdate: boolean;
+
   constructor(room: Room, keyword: V, def: SyncKeywords[V]) {
     super(room.io, keyword, def);
 
-    this.io.use((socket, next) => {
+    this.permitUpdate = false
+
+    const initUser = (socket: Socket, next: (err? : Error) => any) => {
       const sessionId: string | undefined = socket.handshake.auth.sessionId;
       if (typeof sessionId !== "string")
         return next(Error("Socket must have a valid session ID!"));
@@ -120,9 +124,17 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
         return next(Error("Provided session ID does not exist on server!"));
 
       socket.data.userId = user.userId;
-    });
+    }
+
+    this.io.use(initUser);
 
     this.individualData = new Map();
+  }
+
+  /** Use if you dare. Updates ALL entries with the same data. (set permitUpdate to true first!) */
+  update(diff: Diff<SyncKeywords[V]>): void {
+    if (!this.permitUpdate) console.warn('Update shouldn\'t be used on a PersonalSyncHost. Are you sure you didn\'t mean updateUser?')
+    super.update(diff)
   }
 
   addUserById(userId: string) {
@@ -143,9 +155,11 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
     super.sendData(socket, this.individualData.get(userId));
   }
 
+  /** Updates the data synced to a specific User. */
   updateUser(user: User, diff: Diff<SyncKeywords[V]>) {
     const data = this.individualData.get(user.userId) ?? {};
 
+    
     try {
       patch(data, diff);
       this.io.to(user.userId).emit("sync_diff", diff);

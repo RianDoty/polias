@@ -180,9 +180,6 @@ describe('Server-Only PersonalSyncHost tests', () => {
 
     user1 = new User(room, {name: 'fizzbuzz'})
     host.addUserById(user1.userId)
-
-    user2 = new User(room, {name: 'pingpong'})
-    host.addUserById(user2.userId)
   })
 
   describe('Single-User', () => {
@@ -202,7 +199,39 @@ describe('Server-Only PersonalSyncHost tests', () => {
   })
 
   describe('Multi-User', () => {
-    
+    beforeEach(() => {
+      user2 = new User(room, {name: 'pingpong'})
+      host.addUserById(user2.userId)
+    })
+
+    it('Begins with both users having individual data', () => {
+      const data1 = host.getDataById(user1.userId)
+      const data2 = host.getDataById(user2.userId)
+
+      expect(data1).toBeDefined()
+      expect(data1).toEqual({foo: 'bar'})
+      expect(data2).toBeDefined()
+      expect(data2).toEqual({foo: 'bar'})
+    })
+
+    it('Edits data individually', () => {
+      const data1 = host.getDataById(user1.userId)
+      const data2 = host.getDataById(user2.userId)
+
+      host.updateUser(user1, {foo: 'pong'})
+
+      expect(data1).toBeDefined()
+      expect(data1).toEqual({foo: 'pong'})
+      expect(data2).toBeDefined()
+      expect(data2).toEqual({foo: 'bar'})
+
+      host.updateUser(user2, {fizz: 'buzz'})
+
+      expect(data1).toBeDefined()
+      expect(data1).toEqual({foo: 'pong'})
+      expect(data2).toBeDefined()
+      expect(data2).toEqual({foo: 'bar', fizz: 'buzz'})
+    })
   })
 })
 
@@ -216,8 +245,6 @@ describe("Server-Client PersonalSyncHost tests", () => {
   let firstData2: Promise<unknown>
   let user1: User
   let user2: User
-
-  jest.setTimeout(250)
 
   beforeEach(async () => {
     roomManager = new RoomManager(io.of("/"));
@@ -262,6 +289,10 @@ describe("Server-Client PersonalSyncHost tests", () => {
     expect(await firstData1).toEqual({ foo: "bar" });
     expect(await firstData2).toEqual({ foo: "bar" });
   });
+
+  it('Puts sockets in the correct rooms', () => {
+    expect(host.nsp.adapter.rooms.get(user1.userId)).toBeDefined()
+  })
 
   it('Emits diffs', async () => {
     const diff = socketEvent(syncClientSocket1, 'sync_diff')
