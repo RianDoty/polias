@@ -77,7 +77,10 @@ class SyncHost<V extends keyof SyncKeywords> extends Base {
     const nsp = io.server.of(`${io.name}sync/${keyword}/`);
     this.nsp = nsp;
 
-    nsp.on("connect", (socket) => this.sendData(socket));
+    nsp.on("connect", (socket) => {
+      console.log('Socket connected to SyncHost. Sending data..')
+      this.sendData(socket)
+    });
 
     console.log(`initiating sync ${io.name}sync/${keyword}/`);
   }
@@ -107,14 +110,15 @@ class SyncHost<V extends keyof SyncKeywords> extends Base {
 // Use update() if you dare
 class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
   readonly individualData: Map<string, SyncKeywords[V]>;
-  permitUpdate: boolean;
+  _permitUpdate: boolean;
 
   constructor(room: Room, keyword: V, def: SyncKeywords[V]) {
     super(room.io, keyword, def);
 
-    this.permitUpdate = false
+    this._permitUpdate = false
 
     const initUser = (socket: Socket, next: (err? : Error) => any) => {
+      console.log('Initializing user for socket %s', socket.id)
       const sessionId: string | undefined = socket.handshake.auth.sessionId;
       if (typeof sessionId !== "string")
         return next(Error("Socket must have a valid session ID!"));
@@ -123,21 +127,22 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
       if (!user)
         return next(Error("Provided session ID does not exist on server!"));
 
-      socket.data.userId = user.userId;
+      socket.data = {userId: user.userId};
     }
 
-    this.io.use(initUser);
+    this.nsp.use(initUser);
 
     this.individualData = new Map();
   }
 
   /** Use if you dare. Updates ALL entries with the same data. (set permitUpdate to true first!) */
   update(diff: Diff<SyncKeywords[V]>): void {
-    if (!this.permitUpdate) console.warn('Update shouldn\'t be used on a PersonalSyncHost. Are you sure you didn\'t mean updateUser?')
+    if (!this._permitUpdate) console.warn("Update should not be used on a PersonalSyncHost. Did you mean updateUser?")
     super.update(diff)
   }
 
   addUserById(userId: string) {
+    console.log('Adding user id %c%s', "color: blue;", userId)
     this.individualData.set(userId, JSONClone(this.data));
   }
 
@@ -146,6 +151,7 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
   }
 
   sendData(socket: Socket, data?: SyncKeywords[V]) {
+    console.log('Sending data to socket %s', socket.id)
     if (data) return super.sendData(socket, data);
 
     const userId = socket.data.userId;
@@ -158,7 +164,6 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
   /** Updates the data synced to a specific User. */
   updateUser(user: User, diff: Diff<SyncKeywords[V]>) {
     const data = this.individualData.get(user.userId) ?? {};
-
     
     try {
       patch(data, diff);
