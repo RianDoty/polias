@@ -252,11 +252,15 @@ describe("Server-Client PersonalSyncHost tests", () => {
     host = new PersonalSyncHost(room, "foobar" as any, { foo: "bar" });
 
     async function initSocket() {
+      //Create a socket to connect to the room and initialize a User and its Session.
       const roomSocket = Client(Address(room.ioNamespace.name), {auth: {username: 'foo'}})
+
+      //Wait for the socket to connect and the session to be passed
       const sessionEvent = socketEvent(roomSocket, 'session')
       await socketConnect(roomSocket)
       const session = (await sessionEvent) as {userId: string, sessionId: string}
 
+      //Create a socket to connect to the PersonalSyncHost
       const syncSocket = Client(Address(host.nsp.name), {auth: {sessionId: session.sessionId}})
 
       const firstData = socketEvent(syncSocket, 'sync_data')
@@ -290,8 +294,8 @@ describe("Server-Client PersonalSyncHost tests", () => {
     expect(await firstData2).toEqual({ foo: "bar" });
   });
 
-  it('Puts sockets in the correct rooms', () => {
-    expect(host.nsp.adapter.rooms.get(user1.userId)).toBeDefined()
+  it('Puts sockets in the correct rooms', async () => {
+    expect(await host.nsp.in(user1.userId).fetchSockets())
   })
 
   it('Emits diffs', async () => {
