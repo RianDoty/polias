@@ -78,11 +78,11 @@ class SyncHost<V extends keyof SyncKeywords> extends Base {
     this.nsp = nsp;
 
     nsp.on("connect", (socket) => {
-      console.log('Socket connected to SyncHost. Sending data..')
-      this.sendData(socket)
+      //console.log("Socket connected to SyncHost. Sending data..");
+      this.sendData(socket);
     });
 
-    console.log(`initiating sync ${io.name}sync/${keyword}/`);
+    //console.log(`initiating sync ${io.name}sync/${keyword}/`);
   }
 
   sendData(socket: Socket, data?: SyncKeywords[V]) {
@@ -102,7 +102,7 @@ class SyncHost<V extends keyof SyncKeywords> extends Base {
   }
 
   close() {
-    this.nsp.removeAllListeners()
+    this.nsp.removeAllListeners();
   }
 }
 
@@ -115,20 +115,25 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
   constructor(room: Room, keyword: V, def: SyncKeywords[V]) {
     super(room.io, keyword, def);
 
-    this._permitUpdate = false
+    this._permitUpdate = false;
 
-    const initUser = (socket: Socket, next: (err? : Error) => any) => {
-      console.log('Initializing user for socket %s', socket.id)
+    const initUser = (socket: Socket, next: (err?: Error) => any) => {
+      console.log("Initializing user for socket %s", socket.id);
       const sessionId: string | undefined = socket.handshake.auth.sessionId;
-      if (typeof sessionId !== "string")
+      if (typeof sessionId !== "string") {
+        console.log("Socket rejected because of invalid ID format!");
         return next(Error("Socket must have a valid session ID!"));
+      }
 
       const user = room.users.findUser(sessionId);
-      if (!user)
+      if (!user) {
+        console.log("Socket rejected because of nonexistent ID!");
         return next(Error("Provided session ID does not exist on server!"));
+      }
 
-      socket.data = {userId: user.userId};
-    }
+      socket.data = { userId: user.userId };
+      next();
+    };
 
     this.nsp.use(initUser);
 
@@ -137,34 +142,37 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
 
   /** Use if you dare. Updates ALL entries with the same data. (set permitUpdate to true first!) */
   update(diff: Diff<SyncKeywords[V]>): void {
-    if (!this._permitUpdate) console.warn("Update should not be used on a PersonalSyncHost. Did you mean updateUser?")
-    super.update(diff)
+    if (!this._permitUpdate)
+      console.warn(
+        "Update should not be used on a PersonalSyncHost. Did you mean updateUser?"
+      );
+    super.update(diff);
   }
 
   addUserById(userId: string) {
-    console.log('Adding user id %c%s', "color: blue;", userId)
+    console.log("Adding user id %c%s", "color: blue;", userId);
     this.individualData.set(userId, JSONClone(this.data));
   }
 
   getDataById(userId: string) {
-    return this.individualData.get(userId)
+    return this.individualData.get(userId);
   }
 
   sendData(socket: Socket, data?: SyncKeywords[V]) {
-    console.log('Sending data to socket %s', socket.id)
+    console.log("Sending data to socket %s", socket.id);
     if (data) return super.sendData(socket, data);
 
     const userId = socket.data.userId;
 
-    if (!this.individualData.has(userId)) this.addUserById(userId)
-      
+    if (!this.individualData.has(userId)) this.addUserById(userId);
+
     super.sendData(socket, this.individualData.get(userId));
   }
 
   /** Updates the data synced to a specific User. */
   updateUser(user: User, diff: Diff<SyncKeywords[V]>) {
     const data = this.individualData.get(user.userId) ?? {};
-    
+
     try {
       patch(data, diff);
       this.io.to(user.userId).emit("sync_diff", diff);
