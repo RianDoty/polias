@@ -42,6 +42,11 @@ class RoomManager extends Base {
   findRoom(code: string) {
     return this.rooms.get(code);
   }
+
+  close() {
+    for (const room of this.rooms.values()) this.destroyRoom(room);
+    this.roomListSync.close();
+  }
 }
 
 export default RoomManager;
