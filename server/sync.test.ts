@@ -8,9 +8,14 @@ import Room from "./room";
 import RoomManager from "./room-manager";
 import { AddressInfo } from "net";
 import User from "./user";
+import { json } from "stream/consumers";
+import UserManager from "./user-manager";
 
 jest.mock("./room-manager");
 jest.mock("./room");
+
+const mockedRoomManager = RoomManager as jest.MockedClass<typeof RoomManager>
+const mockedRoom = Room as jest.MockedClass<typeof Room>
 
 let io: Server, serverSocket: ServerSocket, clientSocket: ClientSocket;
 let port: number;
@@ -185,10 +190,11 @@ describe("Server-Only PersonalSyncHost tests", () => {
 
   beforeEach(() => {
     room = {
-      users: {
-        findUser: jest.fn(() => user1),
-      },
-    } as unknown as Room;
+      code: 'AAAA',
+      io: io.of('/AAAA/'), 
+      users: {findUser: jest.fn()}
+    } as unknown as Room
+
     host = new PersonalSyncHost(room, "foobar" as any, { foo: "bar" });
 
     user1 = new User(room, { name: "fizzbuzz" });
@@ -249,106 +255,67 @@ describe("Server-Only PersonalSyncHost tests", () => {
 });
 
 describe("Server-Client PersonalSyncHost tests", () => {
-  let roomManager: RoomManager;
-  let room: Room;
-  let host: PersonalSyncHost<any>;
-  let syncClientSocket1: ClientSocket;
-  let syncClientSocket2: ClientSocket;
-  let firstData1: Promise<unknown>;
-  let firstData2: Promise<unknown>;
-  let user1: User;
-  let user2: User;
+  let room: Room
+  let host: PersonalSyncHost<any>
+  let user1: User
+  let user2: User
+  let syncSocket1: ClientSocket
+  let syncSocket2: ClientSocket
+  let firstData1: Promise<any>
+  let firstData2: Promise<any>
 
   beforeEach(async () => {
-    roomManager = new RoomManager(io.of("/"));
-    room = roomManager.createRoom({ code: "AAAA" });
-    host = new PersonalSyncHost(room, "foobar" as any, { foo: "bar" });
+    //Room stub
+    const sessionUsers = new Map()
+    room = {
+      code: 'AAAA',
+      io: io.of('/AAAA/'), 
+      users: {findUser: (sId: string) => sessionUsers.get(sId)}
+    } as unknown as Room
 
-    async function initSocket() {
-      // console.log("INITIALIZING SOCKET");
-      // //Create a socket to connect to the room and initialize a User and its Session.
-      // const roomSocket = Client(Address(room.ioNamespace.name), {
-      //   auth: { username: "foo" },
-      // });
+    //Vars
+    host = new PersonalSyncHost(room, 'sussy' as any, { sus: 'amogus' })
+    user1 = new User(room, {name: 'gigachad'})
+    user2 = new User(room, {name: 'femboy'})
 
-      // //Wait for the socket to connect for the session to be passed
-      // const sessionEvent = socketEvent(roomSocket, "session");
-      // console.log("WAITING FOR ROOM SOCKET TO CONNECT");
-      // await socketConnect(roomSocket);
-      // const session = (await sessionEvent) as {
-      //   userId: string;
-      //   sessionId: string;
-      // };
+    sessionUsers.set('theonepiece', user1).set('theonepieceisreal', user2)
 
-      // //Create a socket to connect to the PersonalSyncHost
-      // const syncSocket = Client(Address(host.nsp.name), {
-      //   auth: { sessionId: session.sessionId },
-      // });
+    //Connect two sockets to the host, sessionId doesn't matter because it will work anyways
+    const syncaddr = Address(host.nsp.name)
 
-      // const firstData = socketEvent(syncSocket, "sync_data");
+    syncSocket1 = Client(syncaddr, {auth: {sessionId: 'theonepiece'}})
+    firstData1 = socketEvent(syncSocket1, 'sync_data')
+    await socketConnect(syncSocket1)
 
-      // console.log("WAITING FOR SYNC SOCKET TO CONNECT");
-      // await socketConnect(syncSocket);
-
-      // const user = room.users.findUser(session.sessionId);
-      // if (!user) throw Error("No user found!");
-
-      // console.log("INITIALIZATION COMPLETE");
-
-      const host = new PersonalSyncHost(
-        "" as unknown as Room,
-        "foobar" as any,
-        {}
-      );
-      const syncSocket = Client();
-
-      const firstData = socketEvent(syncSocket, "sync_data");
-
-      const user = new User();
-
-      return { socket: syncSocket, firstData, user };
-    }
-    const socketData = await Promise.all([initSocket(), initSocket()]);
-
-    syncClientSocket1 = socketData[0].socket;
-    firstData1 = socketData[0].firstData;
-    user1 = socketData[0].user;
-
-    syncClientSocket2 = socketData[1].socket;
-    firstData2 = socketData[1].firstData;
-    user2 = socketData[1].user;
-  });
+    syncSocket2 = Client(syncaddr, {auth: {sessionId: 'theonepieceisreal'}})
+    firstData2 = socketEvent(syncSocket2, 'sync_data')
+    await socketConnect(syncSocket2)
+  })
 
   afterEach(() => {
-    roomManager.close();
-    host.close();
-    syncClientSocket1.close();
-    syncClientSocket2.close();
-  });
+    host.close()
+    syncSocket1.close()
+    syncSocket2.close()
+  })
+  
+  it('Initializes correctly', () => {
+    expect(host.getDataById(user1.userId)).toEqual({ sus: 'amogus' })
+    expect(host.getDataById(user2.userId)).toEqual({ sus: 'amogus' })
+  })
 
-  it("Puts sockets in the correct rooms", async () => {
-    expect(await host.nsp.in(user1.userId).fetchSockets());
-  });
+  it('Sends data to both users', async () => {
+    await expect(firstData1).resolves.toEqual({ sus: 'amogus' })
+    await expect(firstData2).resolves.toEqual({ sus: 'amogus' })
+  })
 
-  it("Provides both sockets with default data", async () => {
-    expect(await firstData1).toEqual({ foo: "bar" });
-    expect(await firstData2).toEqual({ foo: "bar" });
-  });
+  it('sends diffs to users individually', async () => {
+    let diff1 = socketEvent(syncSocket1, 'sync_diff')
+    let diff2 = socketEvent(syncSocket2, 'sync_diff')
 
-  // it("Emits diffs", async () => {
-  //   const diff = socketEvent(syncClientSocket1, "sync_diff");
-  //   host.updateUser(user1, { bar: "baz" });
-  //   expect(await diff).toEqual({ bar: "baz" });
-  // });
+    host.updateUser(user1, {among:'us'})
+    host.updateUser(user2, {sussy:'impostor'})
 
-  // it("Provides each socket with unique diffs", async () => {
-  //   const diff1 = socketEvent(syncClientSocket1, "sync_diff");
-  //   const diff2 = socketEvent(syncClientSocket2, "sync_diff");
-
-  //   host.updateUser(user1, { bar: "baz" });
-  //   expect(await diff1).toEqual({ bar: "baz" });
-
-  //   host.updateUser(user2, { fizz: "buzz" });
-  //   expect(await diff2).toEqual({ fizz: "buzz" });
-  // });
-});
+    await expect(diff1).resolves.toEqual({among: 'us'})
+    await expect(diff2).resolves.toEqual({sussy:'impostor'})
+  })
+})

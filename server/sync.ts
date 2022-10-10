@@ -131,7 +131,9 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
         return next(Error("Provided session ID does not exist on server!"));
       }
 
-      socket.data = { userId: user.userId };
+      const { userId } = user
+      socket.data = { userId };
+      socket.join(userId)
       next();
     };
 
@@ -166,6 +168,7 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
 
     if (!this.individualData.has(userId)) this.addUserById(userId);
 
+    console.log('Sending data to socket %s', socket.id)
     super.sendData(socket, this.individualData.get(userId));
   }
 
@@ -175,7 +178,7 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
 
     try {
       patch(data, diff);
-      this.io.to(user.userId).emit("sync_diff", diff);
+      this.nsp.to(user.userId).emit("sync_diff", diff);
     } catch (err) {
       console.error("error in diff");
       console.error(err);
