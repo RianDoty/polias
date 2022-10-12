@@ -1,4 +1,3 @@
-import { nextTick } from "process";
 import { Namespace, Socket } from "socket.io";
 import Base from "./base";
 import Room, { RoomTemplate } from "./room";
@@ -82,7 +81,7 @@ class SyncHost<V extends keyof SyncKeywords> extends Base {
       this.sendData(socket);
     });
 
-    //console.log(`initiating sync ${io.name}sync/${keyword}/`);
+    console.log(`initiating sync ${io.name}sync/${keyword}/`);
   }
 
   sendData(socket: Socket, data?: SyncKeywords[V]) {
@@ -113,7 +112,7 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
   _permitUpdate: boolean;
 
   constructor(room: Room, keyword: V, def: SyncKeywords[V]) {
-    super(room.io, keyword, def);
+    super(room.nsp, keyword, def);
 
     this._permitUpdate = false;
 
@@ -131,9 +130,9 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
         return next(Error("Provided session ID does not exist on server!"));
       }
 
-      const { userId } = user
+      const { userId } = user;
       socket.data = { userId };
-      socket.join(userId)
+      socket.join(userId);
       next();
     };
 
@@ -168,7 +167,7 @@ class PersonalSyncHost<V extends keyof SyncKeywords> extends SyncHost<V> {
 
     if (!this.individualData.has(userId)) this.addUserById(userId);
 
-    console.log('Sending data to socket %s', socket.id)
+    console.log("Sending data to socket %s", socket.id);
     super.sendData(socket, this.individualData.get(userId));
   }
 

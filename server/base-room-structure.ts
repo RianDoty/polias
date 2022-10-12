@@ -8,7 +8,7 @@ export default class BaseRoomStructure extends Base {
   readonly code!: string;
 
   constructor(room: Room) {
-    super(room.ioNamespace);
+    super(room.nsp);
 
     Object.defineProperties(this, {
       room: { value: room },

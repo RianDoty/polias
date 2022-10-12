@@ -2,6 +2,7 @@ import { useState } from "react";
 import useSocketCallbacks from "./socket-callbacks";
 import type { SyncKeywords, SyncServerEvents } from "../../server/sync";
 import useSocket from "./socket";
+import useSession from "../contexts/session";
 
 function JSONClone<O extends object>(obj: O): O {
   return JSON.parse(JSON.stringify(obj));
@@ -35,7 +36,7 @@ function patch<D extends object>(data: D, diff: Diff<D>) {
     Object.assign(data, { [key]: value });
   }
 
-  return data
+  return data;
 }
 
 export type SyncState<k extends keyof SyncKeywords> =
@@ -43,12 +44,14 @@ export type SyncState<k extends keyof SyncKeywords> =
   | [false, SyncKeywords[k], (diff: Partial<SyncKeywords[k]>) => void];
 export default function useSync<k extends keyof SyncKeywords>(
   nsp: string = "/",
-  keyword: k
+  keyword: k,
+  sessionId?: string
 ): SyncState<k> {
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useState<SyncKeywords[k]>({} as SyncKeywords[k]);
   const socket = useSocket<SyncServerEvents<k>>(
-    `${nsp === "/" ? "" : `/${nsp}`}/sync/${keyword}/`
+    `${nsp === "/" ? "" : `/${nsp}`}/sync/${keyword}/`,
+    { auth: { sessionId } }
   );
 
   const onData = (data: SyncKeywords[k]) => {
@@ -67,4 +70,12 @@ export default function useSync<k extends keyof SyncKeywords>(
   });
 
   return loading ? [true] : [false, store, onDiff];
+}
+
+export function usePersonalSync<k extends keyof SyncKeywords>(
+  nsp: string,
+  keyword: k,
+  sessionId?: string
+): SyncState<k> {
+  return useSync(nsp, keyword, sessionId ?? useSession()?.sessionId);
 }

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import useSync from "../../hooks/sync";
+import useSync, { usePersonalSync } from "../../hooks/sync";
 import Avatar from "./avatar";
 import RoomContext from "../../contexts/room";
 import useSocket from "../../hooks/socket";
 import type { UserTemplate } from "../../../server/user";
 import { MessageTemplate } from "../../../server/sync";
+import useSession from "../../contexts/session";
 
 function randomInt(max = 0, min = 0) {
   return min + Math.floor(Math.random() * max);
@@ -32,12 +33,12 @@ const MessageEntry = ({ onSubmit }) => {
   const [error, setError] = useState<string>();
 
   //Deprecated anti-amogus filter
-  const rejectionMessages = ["No.", "Stop.", "Nope!", "Nevermind"];
+  // const rejectionMessages = ["No.", "Stop.", "Nope!", "Nevermind"];
   function onMessageChange(text) {
-    if (/*text.match(/amogus/i)*/ false) {
-      setContent(randomFromArray(rejectionMessages));
-      return;
-    }
+    // if (text.match(/amogus/i)) {
+    //   setContent(randomFromArray(rejectionMessages));
+    //   return;
+    // }
     setContent(text);
   }
 
@@ -75,13 +76,15 @@ const MessageEntry = ({ onSubmit }) => {
 };
 
 const MessageList = ({
-  messages
+  messages,
+  loading
 }: {
-  messages: { [key: string]: MessageTemplate };
+  messages?: { [key: string]: MessageTemplate };
+  loading: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>();
 
-  const msgAmt = Object.values(messages).length;
+  const msgAmt = messages ? Object.values(messages).length : 0;
   useEffect(() => {
     const messageList = ref.current;
     const { scrollTop, scrollHeight, offsetHeight } = messageList;
@@ -91,9 +94,9 @@ const MessageList = ({
     if (isScrolledToBottom) {
       messageList.scrollTop = scrollHeight;
     }
-  }, [msgAmt]);
+  }, [msgAmt, loading]);
 
-  if (!messages) return <div className="message-list" />;
+  if (loading || !messages) return <div className="message-list" ref={ref} />;
 
   const messageComponents = Object.values(messages).map((m) => {
     return <Message data={m} />;
@@ -108,16 +111,14 @@ const MessageList = ({
 
 const Chat = () => {
   const code = useContext(RoomContext);
-  const [loading, messages] = useSync(code, "chat_log");
+  const [loading, messages] = usePersonalSync(code, "chat_log");
   const socket = useSocket(`${code}/chat`);
 
   const submitMessage = (content) => socket.emit("message-send", content);
 
-  if (loading) return <div className="chat">Loading..</div>;
-
   return (
     <div className="chat">
-      <MessageList messages={messages} />
+      <MessageList messages={messages} loading={loading} />
       <MessageEntry onSubmit={submitMessage} />
     </div>
   );

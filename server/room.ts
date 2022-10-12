@@ -46,7 +46,7 @@ class Room extends Base {
   name: string;
   manager: RoomManager;
   host?: User;
-  ioNamespace: Namespace;
+  nsp: Namespace;
   gameConfig: Config<typeof baseConfigData>;
   syncManager: RoomSyncManager;
   events: EventEmitter;
@@ -63,18 +63,18 @@ class Room extends Base {
     this.password = password;
     this.events = new EventEmitter();
 
-    const ioNamespace = this.io.server.of(`${this.io.name}${this.code}/`);
-    debugNSP(ioNamespace);
-    this.ioNamespace = ioNamespace;
+    const nsp = this.io.server.of(`${this.io.name}${this.code}/`);
+    debugNSP(nsp);
+    this.nsp = nsp;
 
     this.users = new UserManager(this);
-    
+
     this.gameConfig = new Config(baseConfigData);
 
     this.syncManager = new RoomSyncManager(this);
 
     //Password Authentication
-    ioNamespace.use((socket: Socket, next: (err?: Error) => void) => {
+    nsp.use((socket: Socket, next: (err?: Error) => void) => {
       const { password } = socket.handshake.auth;
 
       if (this.password) {
@@ -86,7 +86,7 @@ class Room extends Base {
       next();
     });
 
-    this.users.listen()
+    this.users.listen();
   }
 
   template(): RoomTemplate {

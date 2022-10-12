@@ -10,12 +10,13 @@ export default function useSocket<
   namespace: string,
   options: Partial<ManagerOptions & SocketOptions> = {}
 ): Socket<ListenEvents, EmitEvents> {
+  const optionsString = JSON.stringify(options);
   const socket = useMemo(() => {
     const socket = io(namespace, options);
     console.log(`new socket ${namespace}`);
 
     return socket;
-  }, [namespace]);
+  }, [namespace, optionsString]);
 
   useEffect(() => {
     socket.on("connect", () => {

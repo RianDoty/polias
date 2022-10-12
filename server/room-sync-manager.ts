@@ -1,5 +1,5 @@
 import BaseManager from "./base-manager";
-import { Diff, SyncHost } from "./sync";
+import { Diff, PersonalSyncHost, SyncHost } from "./sync";
 
 import type Room from "./room";
 import type User from "./user";
@@ -10,12 +10,14 @@ export default class RoomSyncManager extends BaseManager {
   stateSync: SyncHost<"room_state">;
   listSync: SyncHost<"rooms">;
   optionsSync: SyncHost<"room_options">;
+  chatSync: SyncHost<"chat_log">;
 
   constructor(room: Room) {
     super(room);
 
     const { io } = this;
 
+    this.chatSync = new PersonalSyncHost(room, "chat_log", {});
     this.usersSync = new SyncHost(io, "room_users", {});
     this.stateSync = new SyncHost(io, "room_state", {
       state: "lobby"

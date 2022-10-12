@@ -52,6 +52,7 @@ export default class UserManager extends BaseManager {
 
         socket.data.user = newUser;
         socket.data.sessionId = uuid();
+        console.log("New user with SID %s", socket.data.sessionId);
         next();
       } catch (err) {
         if (err instanceof Error) next(err);

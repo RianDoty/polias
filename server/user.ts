@@ -21,9 +21,8 @@ class User extends BaseRoomStructure {
   userId: string;
   ready: boolean;
   inGame: false;
-  readonly room!: Room;
-  role: string
-  present: boolean
+  role: string;
+  present: boolean;
 
   constructor(
     room: Room,

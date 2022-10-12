@@ -11,13 +11,13 @@
       "open": true,
       "views": [
         {
+          "id": "codesandbox.problems"
+        },
+        {
           "id": "codesandbox.terminal"
         },
         {
           "id": "codesandbox.console"
-        },
-        {
-          "id": "codesandbox.problems"
         }
       ]
     }
