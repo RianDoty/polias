@@ -82,11 +82,14 @@ const MessageList = ({
   messages?: { [key: string]: MessageTemplate };
   loading: boolean;
 }) => {
-  const ref = useRef<HTMLDivElement>();
+  const ref = useRef<HTMLDivElement>(null);
 
   const msgAmt = messages ? Object.values(messages).length : 0;
   useEffect(() => {
     const messageList = ref.current;
+
+    if (!messageList) return;
+
     const { scrollTop, scrollHeight, offsetHeight } = messageList;
 
     const isScrolledToBottom = scrollHeight - offsetHeight - scrollTop < 100;
