@@ -191,8 +191,8 @@ describe("Server-Only PersonalSyncHost tests", () => {
   beforeEach(() => {
     room = {
       code: 'AAAA',
-      io: io.of('/AAAA/'), 
-      users: {findUser: jest.fn()}
+      nsp: io.of('/AAAA/'), 
+      users: {findUser: ()=>{}}
     } as unknown as Room
 
     host = new PersonalSyncHost(room, "foobar" as any, { foo: "bar" });
@@ -269,7 +269,7 @@ describe("Server-Client PersonalSyncHost tests", () => {
     const sessionUsers = new Map()
     room = {
       code: 'AAAA',
-      io: io.of('/AAAA/'), 
+      nsp: io.of('/AAAA/'), 
       users: {findUser: (sId: string) => sessionUsers.get(sId)}
     } as unknown as Room
 
