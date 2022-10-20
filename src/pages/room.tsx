@@ -8,7 +8,6 @@ import CardPackContext from "../contexts/cardPack";
 //Game components
 import LeftSideBar from "../components/game/left-side-bar";
 import MiddleContent from "../components/game/middle-content";
-import Console from "../components/game/console/console";
 import NameEntryScreen from "../components/game/name-entry-screen";
 
 import type { RouteComponentProps } from "wouter";
@@ -104,7 +103,6 @@ export default function RoomMain({
                 <MiddleContent />
               </ErrorBoundary>
               <ErrorBoundary>
-                <Console />
               </ErrorBoundary>
               <ErrorBoundary>
                 <NameEntryScreen />
